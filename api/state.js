@@ -12,7 +12,20 @@
  * Requires a Postgres store connected to this Vercel project (Storage tab),
  * which injects POSTGRES_URL automatically — @vercel/postgres picks it up.
  */
-import { sql } from "@vercel/postgres";
+import { createPool } from "@vercel/postgres";
+
+// Accept whichever connection-string env var the provider injects.
+// Neon's Vercel integration sets DATABASE_URL; classic Vercel Postgres set
+// POSTGRES_URL. Either works.
+const CONN =
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_URL_NON_POOLING;
+
+const pool = createPool(CONN ? { connectionString: CONN } : undefined);
+const sql = (strings, ...values) => pool.sql(strings, ...values);
 
 const LOG_CAP = 100;
 
