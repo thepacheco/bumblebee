@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/checkin.css" />
 </head>
 <body>
 
@@ -158,6 +159,98 @@
     </div>
   </footer>
 
+  <!-- =================================================================
+       Hidden check-in — an OVERLAY on the homepage (no separate URL).
+       Opened by the footer bee (triple-click). Nothing to stumble onto.
+       ================================================================= -->
+  <div id="checkin-overlay" hidden>
+
+    <!-- identity + PIN gate -->
+    <div class="gate" id="gate">
+      <div class="gate-card">
+        <img src="assets/bee.svg" alt="" style="width:48px;height:48px;margin:0 auto .6rem" />
+        <h1>Who's checking in?</h1>
+        <p>Just the two of us.</p>
+        <div class="who-row" id="who-row">
+          <button class="who-btn" data-who="nama" aria-label="Elephant">
+            <img src="assets/elephant.svg" alt="Elephant" />
+          </button>
+          <button class="who-btn" data-who="you" aria-label="Bee">
+            <img src="assets/bee.svg" alt="Bee" />
+          </button>
+        </div>
+        <div class="pin-row" id="pin-row">
+          <input id="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off" />
+        </div>
+        <div class="gate-err" id="gate-err"></div>
+        <button class="btn" id="enter-btn" disabled>Enter</button>
+        <button class="gate-exit" id="gate-exit">← never mind</button>
+      </div>
+    </div>
+
+    <!-- top bar -->
+    <button class="leave" id="leave" aria-label="Close" title="Close">✕</button>
+    <button class="story-btn" id="story-btn" aria-label="Our story" hidden>🦜</button>
+    <button class="hist-btn" id="hist-btn" aria-label="History" hidden>🕘</button>
+
+    <!-- split status board -->
+    <main class="split" id="board" hidden>
+      <section class="pane pane-nama" data-side="nama">
+        <img class="avatar" src="assets/elephant.svg" alt="Elephant" />
+        <div class="name"><span class="dot" data-dot="nama"></span></div>
+        <div class="status-bubble" data-status="nama">—</div>
+        <div class="status-meta" data-meta="nama">No check-in yet</div>
+        <div class="pane-me-actions" data-actions="nama" hidden>
+          <button class="check-btn" data-open="nama">Check in</button>
+        </div>
+      </section>
+      <section class="pane pane-you" data-side="you">
+        <img class="avatar" src="assets/bee.svg" alt="Bee" />
+        <div class="name"><span class="dot" data-dot="you"></span></div>
+        <div class="status-bubble" data-status="you">—</div>
+        <div class="status-meta" data-meta="you">No check-in yet</div>
+        <div class="pane-me-actions" data-actions="you" hidden>
+          <button class="check-btn" data-open="you">Check in</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- check-in composer (multi-select) -->
+    <div class="composer" id="composer" hidden role="dialog" aria-modal="true" aria-label="Check in">
+      <header class="composer-head">
+        <button class="composer-close" id="composer-close" aria-label="Cancel">✕</button>
+        <h2>How's it going?</h2>
+        <p>Tap anything that fits — pick as many as you like.</p>
+      </header>
+      <div class="composer-body" id="composer-body"></div>
+      <footer class="composer-foot">
+        <div class="composer-preview" id="composer-preview">Nothing selected yet</div>
+        <button class="btn composer-send" id="composer-send" disabled>Update status</button>
+      </footer>
+    </div>
+
+    <!-- story timeline -->
+    <div class="story" id="story" hidden role="dialog" aria-modal="true" aria-label="Story">
+      <header class="story-head">
+        <button class="composer-close" id="story-close" aria-label="Close">✕</button>
+        <h2>🦜</h2>
+      </header>
+      <div class="story-body"><ol class="timeline" id="timeline"></ol></div>
+    </div>
+
+    <!-- history log -->
+    <div class="story" id="history" hidden role="dialog" aria-modal="true" aria-label="History">
+      <header class="story-head">
+        <button class="composer-close" id="history-close" aria-label="Close">✕</button>
+        <h2>Check-in history</h2>
+      </header>
+      <div class="story-body"><ul class="hist-list" id="hist-list"></ul></div>
+    </div>
+
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/checkin.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

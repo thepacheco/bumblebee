@@ -1,4 +1,6 @@
-/* Honey Bee Boba — check-in logic (presets only, multi-select). */
+/* Honey Bee Boba — check-in logic.
+ * Runs as an OVERLAY on the homepage (opened by the footer bee triple-click
+ * via window.openCheckin) — there is no separate URL to stumble onto. */
 (function () {
   "use strict";
 
@@ -45,27 +47,31 @@
     ]}
   ];
 
-  /* ---------- Our Story timeline ---------- */
+  /* ---------- story timeline (parrot button) ---------- */
   var STORY = [
     { emoji: "🏠", label: "House" },
     { emoji: "☃️", label: "Snowman" },
     { emoji: "🌩️", label: "Storm" },
+    { emoji: "🛌", label: "Blanket" },
     { emoji: "🐝", label: "Bee" },
-    { emoji: "😜", label: "Crazy" },
-    { emoji: "🚗", label: "Car" },
+    { emoji: "🦘", label: "Kangaroo" },
+    { emoji: "😜", label: "Lalalalala" },
     { emoji: "🎖️", label: "Badge" },
+    { emoji: "🚗", label: "Car" },
     { emoji: "✋", label: "Hand" },
+    { emoji: "⚡", label: "Lightning" },
     { emoji: "✈️", label: "Plane" },
     { emoji: "🤐", label: "Silent" },
     { emoji: "💬", label: "Texting" },
-    { emoji: "🍵", label: "Tea" },
+    { emoji: "♨️", label: "Hot water" },
     { emoji: "🍽️", label: "Dinner" },
     { emoji: "🚗", label: "Car" },
-    { emoji: "⚖️", label: "Jury duty" },
+    { emoji: "⚖️", label: "" },
     { emoji: "👵👴", label: "The bench" }
   ];
 
   /* ---------- elements ---------- */
+  var overlay   = document.getElementById("checkin-overlay");
   var gate      = document.getElementById("gate");
   var whoRow    = document.getElementById("who-row");
   var pinRow    = document.getElementById("pin-row");
@@ -81,22 +87,45 @@
   var storyClose= document.getElementById("story-close");
   var timeline  = document.getElementById("timeline");
 
+  var histBtn   = document.getElementById("hist-btn");
+  var histEl    = document.getElementById("history");
+  var histClose = document.getElementById("history-close");
+  var histList  = document.getElementById("hist-list");
+
   var composer     = document.getElementById("composer");
   var composerBody = document.getElementById("composer-body");
   var composerClose= document.getElementById("composer-close");
   var composerSend = document.getElementById("composer-send");
   var composerPrev = document.getElementById("composer-preview");
 
+  if (!overlay) return; // not on a page that has the overlay
+
   var me = null;
   var latest = null;
-  var selectedKeys = {};   // "emoji|text" -> item
+  var selectedKeys = {};
   var hearts = 0;
 
-  /* ---------- gate ---------- */
-  var savedMe = null;
-  try { savedMe = localStorage.getItem("honeydrop.me"); } catch (e) {}
-  if (savedMe === "nama" || savedMe === "you") enter(savedMe);
+  /* ---------- open / close the overlay ---------- */
+  window.openCheckin = function () {
+    overlay.hidden = false;
+    document.body.classList.add("checkin-open");
+    var savedMe = null;
+    try { savedMe = localStorage.getItem("honeydrop.me"); } catch (e) {}
+    if (me || savedMe === "nama" || savedMe === "you") enter(me || savedMe);
+    else showGate();
+    if (me) Store.heartbeat(me);
+  };
+  function closeOverlay() {
+    overlay.hidden = true;
+    document.body.classList.remove("checkin-open");
+    if (!composer.hidden) composer.hidden = true;
+    if (!storyEl.hidden) storyEl.hidden = true;
+    if (!histEl.hidden) histEl.hidden = true;
+  }
 
+  function showGate() { gate.hidden = false; board.hidden = true; storyBtn.hidden = true; histBtn.hidden = true; }
+
+  /* ---------- gate ---------- */
   whoRow.addEventListener("click", function (e) {
     var btn = e.target.closest(".who-btn");
     if (!btn) return;
@@ -126,60 +155,64 @@
     enter(who);
   }
 
-  gateExit.addEventListener("click", function () { window.location.href = "index.html"; });
-  leaveBtn.addEventListener("click", function () { window.location.href = "index.html"; });
+  gateExit.addEventListener("click", closeOverlay);
+  leaveBtn.addEventListener("click", closeOverlay);
 
   function enter(who) {
     me = who;
     gate.hidden = true;
     board.hidden = false;
     storyBtn.hidden = false;
+    histBtn.hidden = false;
 
-    document.querySelectorAll(".pane").forEach(function (p) {
+    document.querySelectorAll("#checkin-overlay .pane").forEach(function (p) {
       p.classList.toggle("is-me", p.getAttribute("data-side") === me);
     });
-    var myActions = document.querySelector('[data-actions="' + me + '"]');
-    if (myActions) myActions.hidden = false;
-
-    document.querySelectorAll("[data-open]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        if (b.getAttribute("data-open") === me) openComposer();
-      });
+    document.querySelectorAll("#checkin-overlay [data-actions]").forEach(function (a) {
+      a.hidden = a.getAttribute("data-actions") !== me;
     });
 
-    Store.subscribe(render);
+    if (latest) render(latest);
     Store.heartbeat(me);
-    setInterval(function () { if (me) Store.heartbeat(me); }, BEAT_EVERY);
-    setInterval(function () { if (latest) render(latest); }, TICK_EVERY);
-    document.addEventListener("visibilitychange", function () {
-      if (!document.hidden && me) Store.heartbeat(me);
-    });
   }
+
+  /* ---------- wiring that runs once ---------- */
+  document.querySelectorAll("#checkin-overlay [data-open]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (b.getAttribute("data-open") === me) openComposer();
+    });
+  });
+
+  Store.subscribe(render);
+  setInterval(function () { if (me && !overlay.hidden) Store.heartbeat(me); }, BEAT_EVERY);
+  setInterval(function () { if (latest && !overlay.hidden) render(latest); }, TICK_EVERY);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && me && !overlay.hidden) Store.heartbeat(me);
+  });
 
   /* ---------- render board ---------- */
   function render(state) {
     latest = state;
     ["nama", "you"].forEach(function (side) {
       var s = normalize(state[side] || {});
-      var bubble = document.querySelector('[data-status="' + side + '"]');
-      var meta   = document.querySelector('[data-meta="' + side + '"]');
-      var dot    = document.querySelector('[data-dot="' + side + '"]');
+      var bubble = document.querySelector('#checkin-overlay [data-status="' + side + '"]');
+      var meta   = document.querySelector('#checkin-overlay [data-meta="' + side + '"]');
+      var dot    = document.querySelector('#checkin-overlay [data-dot="' + side + '"]');
+      if (!bubble) return;
 
       if (s.items.length || s.hearts > 0) {
-        bubble.innerHTML = renderStatus(s);
+        bubble.innerHTML = renderChips(s.items, s.hearts);
         meta.textContent = "Last check-in · " + stamp(s.at);
       } else {
         bubble.textContent = "—";
         meta.textContent = "No check-in yet";
       }
-
       var online = s.beat && (Date.now() - s.beat < ONLINE_WINDOW);
       dot.classList.toggle("online", !!online);
       dot.title = online ? "Active now" : "Away";
     });
   }
 
-  // tolerate old single-status shape {emoji,text}
   function normalize(s) {
     var items = [];
     if (s.status && s.status.items) items = s.status.items;
@@ -187,12 +220,12 @@
     return { items: items, hearts: (s.status && s.status.hearts) || 0, at: s.at || 0, beat: s.beat || 0 };
   }
 
-  function renderStatus(s) {
-    var chips = s.items.map(function (it) {
+  function renderChips(items, heartCount) {
+    var chips = (items || []).map(function (it) {
       return '<span class="chip-mini"><span class="emoji">' + esc(it.emoji) + "</span>" + esc(it.text) + "</span>";
     });
-    if (s.hearts > 0) {
-      chips.push('<span class="chip-mini heart"><span class="emoji">❤️</span>×' + s.hearts + " I love you</span>");
+    if (heartCount > 0) {
+      chips.push('<span class="chip-mini heart"><span class="emoji">❤️</span>×' + heartCount + " I love you</span>");
     }
     return chips.join("");
   }
@@ -206,7 +239,6 @@
     composer.hidden = false;
   }
   function closeComposer() { composer.hidden = true; }
-
   function keyOf(it) { return it.emoji + "|" + it.text; }
 
   function buildComposer() {
@@ -236,25 +268,34 @@
       composerBody.appendChild(wrap);
     });
 
-    // hearts counter
+    // hearts counter — tap ANYWHERE in the box to add one
     var hs = document.createElement("section");
     hs.className = "composer-section";
     hs.innerHTML =
       '<h3>How many hearts?</h3>' +
-      '<div class="hearts-row">' +
-        '<button class="heart-tap" id="heart-tap" aria-label="Add a heart">❤️</button>' +
+      '<div class="hearts-row" id="hearts-row" role="button" tabindex="0" aria-label="Add a heart">' +
+        '<span class="heart-face" id="heart-face">❤️</span>' +
         '<div class="hearts-count"><b id="hearts-n">0</b> hearts <span>I love you</span></div>' +
         '<button class="heart-reset" id="heart-reset">reset</button>' +
       '</div>';
     composerBody.appendChild(hs);
 
-    document.getElementById("heart-tap").addEventListener("click", function () {
+    var row = document.getElementById("hearts-row");
+    function addHeart() {
       hearts = Math.min(hearts + 1, 999);
       document.getElementById("hearts-n").textContent = hearts;
-      bump(this);
+      bump(document.getElementById("heart-face"));
       updatePreview();
+    }
+    row.addEventListener("click", function (e) {
+      if (e.target.id === "heart-reset") return; // reset handled below
+      addHeart();
     });
-    document.getElementById("heart-reset").addEventListener("click", function () {
+    row.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); addHeart(); }
+    });
+    document.getElementById("heart-reset").addEventListener("click", function (e) {
+      e.stopPropagation();
       hearts = 0;
       document.getElementById("hearts-n").textContent = 0;
       updatePreview();
@@ -275,17 +316,12 @@
   }
 
   composerSend.addEventListener("click", function () {
-    var items = selectedItems();
-    Store.setStatus(me, { items: items, hearts: hearts });
+    Store.setStatus(me, { items: selectedItems(), hearts: hearts });
     closeComposer();
   });
   composerClose.addEventListener("click", closeComposer);
 
-  /* ---------- Our Story ---------- */
-  function openStory() {
-    if (!timeline.childNodes.length) buildStory();
-    storyEl.hidden = false;
-  }
+  /* ---------- story ---------- */
   function buildStory() {
     STORY.forEach(function (node, i) {
       var li = document.createElement("li");
@@ -293,21 +329,55 @@
       li.innerHTML =
         '<span class="tl-dot"></span>' +
         '<div class="tl-card"><span class="tl-emoji">' + node.emoji + "</span>" +
-        '<span class="tl-label">' + esc(node.label) + "</span></div>";
+        (node.label ? '<span class="tl-label">' + esc(node.label) + "</span>" : "") +
+        "</div>";
       timeline.appendChild(li);
     });
   }
-  storyBtn.addEventListener("click", openStory);
+  storyBtn.addEventListener("click", function () {
+    if (!timeline.childNodes.length) buildStory();
+    storyEl.hidden = false;
+  });
   storyClose.addEventListener("click", function () { storyEl.hidden = true; });
 
+  /* ---------- history ---------- */
+  histBtn.addEventListener("click", function () {
+    renderHistory(latest);
+    histEl.hidden = false;
+  });
+  histClose.addEventListener("click", function () { histEl.hidden = true; });
+
+  function renderHistory(state) {
+    histList.innerHTML = "";
+    var log = (state && state.log) || [];
+    if (!log.length) {
+      histList.innerHTML = '<li class="hist-empty">No check-ins yet.</li>';
+      return;
+    }
+    log.forEach(function (e) {
+      var s = normalize({ status: e.status });
+      var avatar = e.side === "nama" ? "assets/elephant.svg" : "assets/bee.svg";
+      var li = document.createElement("li");
+      li.className = "hist-item";
+      li.innerHTML =
+        '<img class="hist-av" src="' + avatar + '" alt="" />' +
+        '<div class="hist-main"><div class="hist-chips">' + renderChips(s.items, s.hearts) + "</div>" +
+        '<div class="hist-time">' + stamp(e.at) + "</div></div>";
+      histList.appendChild(li);
+    });
+  }
+
+  /* ---------- keyboard ---------- */
   document.addEventListener("keydown", function (e) {
-    if (e.key !== "Escape") return;
+    if (e.key !== "Escape" || overlay.hidden) return;
     if (!composer.hidden) closeComposer();
     else if (!storyEl.hidden) storyEl.hidden = true;
+    else if (!histEl.hidden) histEl.hidden = true;
+    else closeOverlay();
   });
 
   /* ---------- helpers ---------- */
-  function bump(el) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  function bump(el) { if (!el) return; el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {

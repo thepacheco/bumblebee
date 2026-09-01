@@ -20,9 +20,12 @@ window.Store = (function () {
   var KEY = "honeydrop.checkin.v1";
   var listeners = [];
 
+  var LOG_CAP = 100;
+
   var EMPTY = {
     nama: { status: null, at: 0, beat: 0 },
-    you:  { status: null, at: 0, beat: 0 }
+    you:  { status: null, at: 0, beat: 0 },
+    log:  []   // history of check-ins, newest first
   };
 
   function read() {
@@ -33,7 +36,8 @@ window.Store = (function () {
       // shallow-merge to tolerate older/partial payloads
       return {
         nama: Object.assign({}, EMPTY.nama, parsed.nama),
-        you:  Object.assign({}, EMPTY.you,  parsed.you)
+        you:  Object.assign({}, EMPTY.you,  parsed.you),
+        log:  Array.isArray(parsed.log) ? parsed.log : []
       };
     } catch (e) {
       return clone(EMPTY);
@@ -63,9 +67,14 @@ window.Store = (function () {
     setStatus: function (side, status) {
       var s = read();
       if (!s[side]) return;
-      s[side].status = status;      // {emoji, text}
-      s[side].at = Date.now();      // timestamp of this check-in (replaces old)
-      s[side].beat = Date.now();    // checking in counts as being present
+      var now = Date.now();
+      s[side].status = status;      // {items:[...], hearts:N}
+      s[side].at = now;             // timestamp of this check-in (replaces old)
+      s[side].beat = now;           // checking in counts as being present
+      // append to the history log (newest first, capped)
+      s.log = s.log || [];
+      s.log.unshift({ side: side, status: status, at: now });
+      if (s.log.length > LOG_CAP) s.log = s.log.slice(0, LOG_CAP);
       write(s);
     },
 

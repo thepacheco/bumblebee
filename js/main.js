@@ -59,7 +59,6 @@
 
   /* ---------- bee routing ---------- */
   var HOME = "index.html";
-  var SECRET = "drinks.html";
   var TRIPLE_WINDOW = 2000; // ms
 
   document.querySelectorAll('[data-bee]').forEach(function (bee) {
@@ -71,6 +70,9 @@
     }
 
     if (mode === "secret") {
+      // Triple-click the footer bee to open the check-in OVERLAY.
+      // Nothing navigates — we stay on the homepage, so there's no
+      // separate page anyone could stumble onto by URL.
       var count = 0;
       var firstAt = 0;
       bee.addEventListener("click", function () {
@@ -79,7 +81,7 @@
         count++;
         if (count >= 3) {
           count = 0;
-          window.location.href = SECRET;
+          if (typeof window.openCheckin === "function") window.openCheckin();
         }
       });
     }
