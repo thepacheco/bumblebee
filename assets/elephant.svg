@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Elephant">
+  <g fill="#9AA7C7">
+    <!-- ears -->
+    <ellipse cx="19" cy="30" rx="11" ry="13"/>
+    <ellipse cx="45" cy="30" rx="11" ry="13"/>
+    <!-- head -->
+    <path d="M18 28 a14 14 0 0 1 28 0 v6 a14 16 0 0 1-28 0 Z"/>
+    <!-- trunk -->
+    <path d="M29 40 q-1 10 -6 14 q-1 4 3 5 q4 1 5-3 q2-9 4-13 Z" />
+  </g>
+  <g fill="#7C8AB0">
+    <ellipse cx="19" cy="30" rx="6.5" ry="8"/>
+    <ellipse cx="45" cy="30" rx="6.5" ry="8"/>
+  </g>
+  <!-- eyes -->
+  <circle cx="27" cy="29" r="2" fill="#2B2118"/>
+  <circle cx="37" cy="29" r="2" fill="#2B2118"/>
+  <circle cx="27.7" cy="28.3" r="0.7" fill="#fff"/>
+  <circle cx="37.7" cy="28.3" r="0.7" fill="#fff"/>
+  <!-- tusks -->
+  <path d="M28 41 q-2 4-4 4" stroke="#F3EEE4" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M38 41 q2 4 4 4" stroke="#F3EEE4" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+</svg>

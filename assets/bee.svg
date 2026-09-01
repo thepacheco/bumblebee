@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bumblebee">
+  <!-- wings -->
+  <ellipse cx="24" cy="20" rx="11" ry="7" fill="#cfe8f5" opacity="0.85" transform="rotate(-24 24 20)"/>
+  <ellipse cx="40" cy="20" rx="11" ry="7" fill="#cfe8f5" opacity="0.85" transform="rotate(24 40 20)"/>
+  <!-- body -->
+  <g>
+    <ellipse cx="32" cy="38" rx="15" ry="17" fill="#F4B93E"/>
+    <path d="M17.6 32 h28.8 a15 17 0 0 1 0.7 5 H16.9 a15 17 0 0 1 0.7-5 Z" fill="#2B2118"/>
+    <path d="M18 43 h28 a15 17 0 0 1-2.4 6 H20.4 A15 17 0 0 1 18 43 Z" fill="#2B2118"/>
+    <path d="M23 52.5 a15 17 0 0 0 18 0 a15 17 0 0 1-18 0 Z" fill="#2B2118"/>
+    <ellipse cx="32" cy="53.5" rx="7.5" ry="3" fill="#2B2118"/>
+  </g>
+  <!-- head -->
+  <circle cx="32" cy="21" r="8.5" fill="#2B2118"/>
+  <circle cx="28.8" cy="20" r="1.6" fill="#fff"/>
+  <circle cx="35.2" cy="20" r="1.6" fill="#fff"/>
+  <!-- antennae -->
+  <path d="M28 14 q-3-5-6-5" stroke="#2B2118" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <path d="M36 14 q3-5 6-5" stroke="#2B2118" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <circle cx="21.8" cy="9" r="1.7" fill="#2B2118"/>
+  <circle cx="42.2" cy="9" r="1.7" fill="#2B2118"/>
+</svg>

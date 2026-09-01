@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Honeydrop Boba — Handcrafted Milk Tea</title>
+  <meta name="description" content="Honeydrop Boba — small-batch milk tea, fruit teas, and brown sugar boba made fresh daily." />
+  <link rel="icon" href="assets/bee.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header">
+    <div class="container nav">
+      <div class="brand">
+        <!-- Header bee: single click ALWAYS goes home -->
+        <button class="logo-btn" data-bee="home" aria-label="Honeydrop Boba — home">
+          <img class="logo" src="assets/bee.svg" alt="" />
+        </button>
+        <span class="brand-name">Honey<span>drop</span></span>
+      </div>
+
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <ul class="nav-links">
+        <li><a href="#menu">Menu</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#visit">Visit</a></li>
+      </ul>
+      <a href="#menu" class="btn btn-primary nav-cta">Order Now</a>
+    </div>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="slider" id="hero-slider">
+      <!-- Swap these gradient placeholders for real photos:
+           <div class="slide" style="background-image:url('assets/hero-1.jpg')"></div> -->
+      <div class="slide slide-1 is-active"></div>
+      <div class="slide slide-2"></div>
+      <div class="slide slide-3"></div>
+      <div class="slide slide-4"></div>
+
+      <div class="container hero-content">
+        <p class="eyebrow">Small-batch · Made fresh daily</p>
+        <h1>Milk tea, the way it should taste.</h1>
+        <p>Hand-shaken classics, seasonal fruit teas, and pillowy brown-sugar boba — brewed with care in every cup.</p>
+        <div class="hero-actions">
+          <a href="#menu" class="btn btn-primary">View Menu</a>
+          <a href="#visit" class="btn btn-ghost">Find Us</a>
+        </div>
+      </div>
+
+      <div class="slider-dots" id="hero-dots"></div>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section class="section about" id="about">
+    <div class="container about-grid">
+      <div>
+        <p class="eyebrow">Our story</p>
+        <h2>Brewed slow. Poured with love.</h2>
+        <p>Honeydrop started with one stubborn idea: that a cup of milk tea should never be an afterthought. We steep our teas in small batches, cook our tapioca fresh through the day, and sweeten everything with real cane and brown sugar — never syrups from a jug.</p>
+        <p>Whether you're a classic-black-tea loyalist or chasing this season's fruit blend, there's a drink here with your name on it.</p>
+        <div class="stat-row">
+          <div class="stat"><b>24+</b><span>Signature drinks</span></div>
+          <div class="stat"><b>100%</b><span>Fresh-cooked boba</span></div>
+          <div class="stat"><b>Daily</b><span>Small batches</span></div>
+        </div>
+      </div>
+      <div class="about-card">
+        <img class="badge" src="assets/bee.svg" alt="Honeydrop mascot" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MENU ===================== -->
+  <section class="section menu" id="menu">
+    <div class="container">
+      <p class="eyebrow">The menu</p>
+      <h2>Find your favorite</h2>
+      <div class="menu-grid">
+        <article class="drink-card"><div class="drink-thumb dt-1"></div><div class="drink-body"><h3>Classic Milk Tea</h3><p>Black tea, creamy milk, chewy tapioca.</p><span class="price">$5.25</span></div></article>
+        <article class="drink-card"><div class="drink-thumb dt-2"></div><div class="drink-body"><h3>Matcha Latte</h3><p>Stone-ground matcha, oat or whole milk.</p><span class="price">$5.75</span></div></article>
+        <article class="drink-card"><div class="drink-thumb dt-3"></div><div class="drink-body"><h3>Brown Sugar Boba</h3><p>Caramelized brown sugar, fresh milk.</p><span class="price">$6.00</span></div></article>
+        <article class="drink-card"><div class="drink-thumb dt-4"></div><div class="drink-body"><h3>Strawberry Fruit Tea</h3><p>Green tea, real strawberry, popping boba.</p><span class="price">$5.75</span></div></article>
+        <article class="drink-card"><div class="drink-thumb dt-5"></div><div class="drink-body"><h3>Thai Tea</h3><p>Spiced Thai black tea, condensed milk.</p><span class="price">$5.50</span></div></article>
+        <article class="drink-card"><div class="drink-thumb dt-6"></div><div class="drink-body"><h3>Mango Passion</h3><p>Seasonal mango, passion fruit, jelly.</p><span class="price">$6.00</span></div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GALLERY ===================== -->
+  <section class="section gallery" id="gallery">
+    <div class="container">
+      <p class="eyebrow">In the shop</p>
+      <h2>A little bit of everyday sweetness</h2>
+    </div>
+    <div class="container">
+      <div class="gallery-track">
+        <div class="gphoto gp-1"></div>
+        <div class="gphoto gp-2"></div>
+        <div class="gphoto gp-3"></div>
+        <div class="gphoto gp-4"></div>
+        <div class="gphoto gp-5"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VISIT ===================== -->
+  <section class="section location" id="visit">
+    <div class="container loc-grid">
+      <div>
+        <p class="eyebrow" style="color:var(--honey)">Visit us</p>
+        <h2>Come say hi</h2>
+        <p>Tucked on the corner with the big window — pull up a stool or grab it to go.</p>
+        <p style="margin-top:1rem"><strong>128 Blossom Street<br/>Riverside, CA 92501</strong></p>
+        <ul class="hours-list">
+          <li><span>Mon – Thu</span><span>11:00 – 21:00</span></li>
+          <li><span>Fri – Sat</span><span>11:00 – 22:30</span></li>
+          <li><span>Sunday</span><span>12:00 – 20:00</span></li>
+        </ul>
+      </div>
+      <div class="map-card"><span class="pin">📍</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER (secret trigger lives here) ===================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <!-- Footer bee: TRIPLE-click within 2s opens the hidden page -->
+          <button class="logo-btn" data-bee="secret" aria-label="Honeydrop Boba">
+            <img class="logo" src="assets/bee.svg" alt="" />
+          </button>
+          <div>
+            <div class="brand-name">Honey<span>drop</span></div>
+            <p class="footer-tag">Handcrafted milk tea, brewed fresh in small batches every single day.</p>
+          </div>
+        </div>
+
+        <ul class="footer-nav">
+          <li><a href="#menu">Menu</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#visit">Visit</a></li>
+        </ul>
+
+        <div class="social" aria-label="Social links">
+          <a href="#" aria-label="Instagram">IG</a>
+          <a href="#" aria-label="TikTok">TT</a>
+          <a href="#" aria-label="Facebook">FB</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© <span id="year"></span> Honeydrop Boba Co. All rights reserved.</span>
+        <span>Made with 🍯 &amp; a little buzz.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
