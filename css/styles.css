@@ -207,12 +207,11 @@ img { max-width: 100%; display: block; }
    ========================================================================== */
 .location { background: var(--espresso); color: var(--cream); }
 .location h2 { color: var(--cream); }
-.loc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center; }
-.hours-list { list-style: none; margin: 1rem 0 0; padding: 0; }
-.hours-list li { display: flex; justify-content: space-between; padding: .55rem 0; border-bottom: 1px solid rgba(255,255,255,.12); font-size: .95rem; }
+.hours-wrap { max-width: 520px; text-align: center; }
+.hours-wrap .eyebrow { text-align: center; }
+.hours-list { list-style: none; margin: 1.2rem 0 0; padding: 0; text-align: left; }
+.hours-list li { display: flex; justify-content: space-between; padding: .7rem .2rem; border-bottom: 1px solid rgba(255,255,255,.12); font-size: 1rem; }
 .hours-list li span:last-child { color: var(--honey); font-weight: 600; }
-.map-card { min-height: 300px; border-radius: var(--radius); background: radial-gradient(circle at 40% 30%, #6b4a38, transparent 55%), linear-gradient(135deg, #3a2a20, #1a120c); display: grid; place-items: center; }
-.map-card .pin { font-size: 3rem; }
 
 /* ==========================================================================
    Footer  (holds the secret bee trigger)

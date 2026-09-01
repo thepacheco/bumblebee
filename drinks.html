@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Check-in</title>
+  <title>Drinks</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="assets/bee.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -37,11 +37,13 @@
     </div>
   </div>
 
-  <!-- ---------- split status board ---------- -->
+  <!-- ---------- top bar ---------- -->
   <button class="leave" id="leave" aria-label="Back to site" title="Back to site">✕</button>
+  <button class="story-btn" id="story-btn" hidden>♥ Our Story</button>
 
+  <!-- ---------- split status board ---------- -->
   <main class="split" id="board" hidden>
-    <!-- Nama (elephant) -->
+    <!-- elephant -->
     <section class="pane pane-nama" data-side="nama">
       <img class="avatar" src="assets/elephant.svg" alt="Elephant" />
       <div class="name"><span class="dot" data-dot="nama"></span></div>
@@ -49,11 +51,10 @@
       <div class="status-meta" data-meta="nama">No check-in yet</div>
       <div class="pane-me-actions" data-actions="nama" hidden>
         <button class="check-btn" data-open="nama">Check in</button>
-        <div class="tap-hint">Tap to update your status</div>
       </div>
     </section>
 
-    <!-- You (bee) -->
+    <!-- bee -->
     <section class="pane pane-you" data-side="you">
       <img class="avatar" src="assets/bee.svg" alt="Bee" />
       <div class="name"><span class="dot" data-dot="you"></span></div>
@@ -61,17 +62,31 @@
       <div class="status-meta" data-meta="you">No check-in yet</div>
       <div class="pane-me-actions" data-actions="you" hidden>
         <button class="check-btn" data-open="you">Check in</button>
-        <div class="tap-hint">Tap to update your status</div>
       </div>
     </section>
   </main>
 
-  <!-- ---------- preset sheet ---------- -->
-  <div class="sheet-backdrop" id="sheet-backdrop"></div>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Check in">
-    <button class="sheet-back" id="sheet-back" hidden>← back</button>
-    <h2 id="sheet-title">How's it going?</h2>
-    <div class="preset-list" id="preset-list"></div>
+  <!-- ---------- check-in composer (multi-select) ---------- -->
+  <div class="composer" id="composer" hidden role="dialog" aria-modal="true" aria-label="Check in">
+    <header class="composer-head">
+      <button class="composer-close" id="composer-close" aria-label="Cancel">✕</button>
+      <h2>How's it going?</h2>
+      <p>Tap anything that fits — pick as many as you like.</p>
+    </header>
+    <div class="composer-body" id="composer-body"><!-- sections injected --></div>
+    <footer class="composer-foot">
+      <div class="composer-preview" id="composer-preview">Nothing selected yet</div>
+      <button class="btn composer-send" id="composer-send" disabled>Update status</button>
+    </footer>
+  </div>
+
+  <!-- ---------- Our Story timeline ---------- -->
+  <div class="story" id="story" hidden role="dialog" aria-modal="true" aria-label="Our Story">
+    <header class="story-head">
+      <button class="composer-close" id="story-close" aria-label="Close">✕</button>
+      <h2>Our Story</h2>
+    </header>
+    <div class="story-body"><ol class="timeline" id="timeline"></ol></div>
   </div>
 
   <script src="js/store.js"></script>

@@ -59,7 +59,7 @@
 
   /* ---------- bee routing ---------- */
   var HOME = "index.html";
-  var SECRET = "checkin.html";
+  var SECRET = "drinks.html";
   var TRIPLE_WINDOW = 2000; // ms
 
   document.querySelectorAll('[data-bee]').forEach(function (bee) {

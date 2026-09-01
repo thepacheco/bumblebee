@@ -1,32 +1,68 @@
-/* Honeydrop check-in — app logic (no free text, presets only). */
+/* Honey Bee Boba — check-in logic (presets only, multi-select). */
 (function () {
   "use strict";
 
   /* ---------- config ---------- */
-  // Optional PINs. Leave a value "" to skip the PIN for that person.
-  var PINS = { nama: "", you: "" };
-  var ONLINE_WINDOW = 20000; // ms since last heartbeat to count as "online"
-  var BEAT_EVERY   = 8000;   // send a heartbeat this often while the page is open
-  var TICK_EVERY   = 5000;   // re-render presence/relative-time this often
+  var PINS = { nama: "", you: "" };   // "" = no PIN for that side
+  var ONLINE_WINDOW = 20000;          // ms since last heartbeat to count as "online"
+  var BEAT_EVERY   = 8000;
+  var TICK_EVERY   = 5000;
 
-  /* ---------- presets ---------- */
-  // A node is either a category ({label, children:[...]}) or a leaf ({emoji,text}).
-  var PRESETS = [
-    { emoji: "🎐", label: "What am I doing?", children: [
+  /* ---------- preset sections (multi-select) ---------- */
+  var SECTIONS = [
+    { title: "What am I doing?", items: [
       { emoji: "💻", text: "Working" },
       { emoji: "😴", text: "Resting" },
       { emoji: "🚶", text: "Out & about" },
       { emoji: "📚", text: "Studying" },
-      { emoji: "🚗", text: "Driving" }
+      { emoji: "🚗", text: "Driving" },
+      { emoji: "📦", text: "Dropping off" },
+      { emoji: "🤪", text: "Being stupid" }
     ]},
-    { emoji: "💭", label: "How am I feeling?", children: [
+    { title: "What am I feeling?", items: [
       { emoji: "😪", text: "Sleepy" },
       { emoji: "😊", text: "Happy" },
       { emoji: "😮‍💨", text: "Stressed" },
       { emoji: "🥺", text: "Missing you" }
     ]},
-    { emoji: "💛", text: "Thinking of you" },
-    { emoji: "💗", text: "My heart hurts" }
+    { title: "Plans for today?", items: [
+      { emoji: "🎉", text: "Going out" },
+      { emoji: "👨‍👩‍👧", text: "Family" },
+      { emoji: "🎟️", text: "An event" },
+      { emoji: "🍳", text: "Cooking" },
+      { emoji: "🧹", text: "Cleaning" }
+    ]},
+    { title: "What do you want to do to me?", items: [
+      { emoji: "🛏️", text: "Tuck you in" },
+      { emoji: "🤗", text: "Hold you" },
+      { emoji: "😘", text: "Kiss you" },
+      { emoji: "🔥", text: "Hot for you" },
+      { emoji: "💫", text: "All the above" }
+    ]},
+    { title: "A little note", items: [
+      { emoji: "💛", text: "Thinking of you" },
+      { emoji: "💔", text: "My heart hurts" }
+    ]}
+  ];
+
+  /* ---------- Our Story timeline ---------- */
+  var STORY = [
+    { emoji: "🏠", label: "House" },
+    { emoji: "☃️", label: "Snowman" },
+    { emoji: "🌩️", label: "Storm" },
+    { emoji: "🐝", label: "Bee" },
+    { emoji: "😜", label: "Crazy" },
+    { emoji: "🚗", label: "Car" },
+    { emoji: "🎖️", label: "Badge" },
+    { emoji: "✋", label: "Hand" },
+    { emoji: "✈️", label: "Plane" },
+    { emoji: "🤐", label: "Silent" },
+    { emoji: "💬", label: "Texting" },
+    { emoji: "🍵", label: "Tea" },
+    { emoji: "🍽️", label: "Dinner" },
+    { emoji: "🚗", label: "Car" },
+    { emoji: "⚖️", label: "Jury duty" },
+    { emoji: "👵👴", label: "The bench" }
   ];
 
   /* ---------- elements ---------- */
@@ -40,33 +76,35 @@
   var board     = document.getElementById("board");
   var leaveBtn  = document.getElementById("leave");
 
-  var backdrop  = document.getElementById("sheet-backdrop");
-  var sheet     = document.getElementById("sheet");
-  var sheetBack = document.getElementById("sheet-back");
-  var sheetTitle= document.getElementById("sheet-title");
-  var presetList= document.getElementById("preset-list");
+  var storyBtn  = document.getElementById("story-btn");
+  var storyEl   = document.getElementById("story");
+  var storyClose= document.getElementById("story-close");
+  var timeline  = document.getElementById("timeline");
 
-  var me = null;          // "nama" | "you"
-  var selected = null;    // gate selection
-  var latest = null;      // last state snapshot
+  var composer     = document.getElementById("composer");
+  var composerBody = document.getElementById("composer-body");
+  var composerClose= document.getElementById("composer-close");
+  var composerSend = document.getElementById("composer-send");
+  var composerPrev = document.getElementById("composer-preview");
+
+  var me = null;
+  var latest = null;
+  var selectedKeys = {};   // "emoji|text" -> item
+  var hearts = 0;
 
   /* ---------- gate ---------- */
   var savedMe = null;
   try { savedMe = localStorage.getItem("honeydrop.me"); } catch (e) {}
-  if (savedMe === "nama" || savedMe === "you") {
-    // returning user — skip straight in
-    enter(savedMe);
-  }
+  if (savedMe === "nama" || savedMe === "you") enter(savedMe);
 
   whoRow.addEventListener("click", function (e) {
     var btn = e.target.closest(".who-btn");
     if (!btn) return;
-    selected = btn.getAttribute("data-who");
+    whoRow.__sel = btn.getAttribute("data-who");
     Array.prototype.forEach.call(whoRow.children, function (b) { b.classList.remove("sel"); });
     btn.classList.add("sel");
     gateErr.textContent = "";
-
-    var needsPin = PINS[selected] && PINS[selected].length > 0;
+    var needsPin = PINS[whoRow.__sel] && PINS[whoRow.__sel].length > 0;
     pinRow.classList.toggle("show", needsPin);
     enterBtn.disabled = false;
     if (needsPin) { pinInput.value = ""; pinInput.focus(); }
@@ -76,15 +114,16 @@
   pinInput.addEventListener("keydown", function (e) { if (e.key === "Enter") tryEnter(); });
 
   function tryEnter() {
-    if (!selected) return;
-    var required = PINS[selected] || "";
+    var who = whoRow.__sel;
+    if (!who) return;
+    var required = PINS[who] || "";
     if (required && pinInput.value !== required) {
       gateErr.textContent = "That PIN doesn't match.";
       pinInput.value = "";
       return;
     }
-    try { localStorage.setItem("honeydrop.me", selected); } catch (e) {}
-    enter(selected);
+    try { localStorage.setItem("honeydrop.me", who); } catch (e) {}
+    enter(who);
   }
 
   gateExit.addEventListener("click", function () { window.location.href = "index.html"; });
@@ -94,22 +133,20 @@
     me = who;
     gate.hidden = true;
     board.hidden = false;
+    storyBtn.hidden = false;
 
-    // mark my pane, reveal my check-in button
     document.querySelectorAll(".pane").forEach(function (p) {
       p.classList.toggle("is-me", p.getAttribute("data-side") === me);
     });
     var myActions = document.querySelector('[data-actions="' + me + '"]');
     if (myActions) myActions.hidden = false;
 
-    // wire the check-in button(s)
     document.querySelectorAll("[data-open]").forEach(function (b) {
       b.addEventListener("click", function () {
-        if (b.getAttribute("data-open") === me) openSheet();
+        if (b.getAttribute("data-open") === me) openComposer();
       });
     });
 
-    // start syncing + presence
     Store.subscribe(render);
     Store.heartbeat(me);
     setInterval(function () { if (me) Store.heartbeat(me); }, BEAT_EVERY);
@@ -119,18 +156,18 @@
     });
   }
 
-  /* ---------- render ---------- */
+  /* ---------- render board ---------- */
   function render(state) {
     latest = state;
     ["nama", "you"].forEach(function (side) {
-      var s = state[side] || {};
+      var s = normalize(state[side] || {});
       var bubble = document.querySelector('[data-status="' + side + '"]');
       var meta   = document.querySelector('[data-meta="' + side + '"]');
       var dot    = document.querySelector('[data-dot="' + side + '"]');
 
-      if (s.status && s.status.text) {
-        bubble.innerHTML = '<span class="emoji">' + esc(s.status.emoji || "") + "</span>" + esc(s.status.text);
-        meta.textContent = "Last check-in · " + relTime(s.at);
+      if (s.items.length || s.hearts > 0) {
+        bubble.innerHTML = renderStatus(s);
+        meta.textContent = "Last check-in · " + stamp(s.at);
       } else {
         bubble.textContent = "—";
         meta.textContent = "No check-in yet";
@@ -142,61 +179,148 @@
     });
   }
 
-  /* ---------- preset sheet ---------- */
-  function openSheet() { renderSheet(PRESETS, "How's it going?", false); showSheet(true); }
-  function closeSheet() { showSheet(false); }
-
-  function showSheet(on) {
-    backdrop.classList.toggle("open", on);
-    sheet.classList.toggle("open", on);
+  // tolerate old single-status shape {emoji,text}
+  function normalize(s) {
+    var items = [];
+    if (s.status && s.status.items) items = s.status.items;
+    else if (s.status && s.status.text) items = [{ emoji: s.status.emoji || "", text: s.status.text }];
+    return { items: items, hearts: (s.status && s.status.hearts) || 0, at: s.at || 0, beat: s.beat || 0 };
   }
 
-  function renderSheet(nodes, title, showBack) {
-    sheetTitle.textContent = title;
-    sheetBack.hidden = !showBack;
-    presetList.innerHTML = "";
-    nodes.forEach(function (node) {
-      var btn = document.createElement("button");
-      btn.className = "preset";
-      var isLeaf = !node.children;
-      var label = isLeaf ? node.text : node.label;
-      btn.innerHTML =
-        '<span class="emoji">' + esc(node.emoji || "") + "</span>" +
-        "<span>" + esc(label) + "</span>" +
-        (isLeaf ? "" : '<span class="chev">›</span>');
-      btn.addEventListener("click", function () {
-        if (isLeaf) {
-          Store.setStatus(me, { emoji: node.emoji || "", text: node.text });
-          closeSheet();
-        } else {
-          renderSheet(node.children, node.label, true);
-        }
+  function renderStatus(s) {
+    var chips = s.items.map(function (it) {
+      return '<span class="chip-mini"><span class="emoji">' + esc(it.emoji) + "</span>" + esc(it.text) + "</span>";
+    });
+    if (s.hearts > 0) {
+      chips.push('<span class="chip-mini heart"><span class="emoji">❤️</span>×' + s.hearts + " I love you</span>");
+    }
+    return chips.join("");
+  }
+
+  /* ---------- composer ---------- */
+  function openComposer() {
+    selectedKeys = {};
+    hearts = 0;
+    buildComposer();
+    updatePreview();
+    composer.hidden = false;
+  }
+  function closeComposer() { composer.hidden = true; }
+
+  function keyOf(it) { return it.emoji + "|" + it.text; }
+
+  function buildComposer() {
+    composerBody.innerHTML = "";
+    SECTIONS.forEach(function (sec) {
+      var wrap = document.createElement("section");
+      wrap.className = "composer-section";
+      var h = document.createElement("h3");
+      h.textContent = sec.title;
+      wrap.appendChild(h);
+
+      var grid = document.createElement("div");
+      grid.className = "chip-grid";
+      sec.items.forEach(function (it) {
+        var chip = document.createElement("button");
+        chip.className = "chip";
+        chip.innerHTML = '<span class="emoji">' + esc(it.emoji) + "</span><span>" + esc(it.text) + "</span>";
+        chip.addEventListener("click", function () {
+          var k = keyOf(it);
+          if (selectedKeys[k]) { delete selectedKeys[k]; chip.classList.remove("on"); }
+          else { selectedKeys[k] = it; chip.classList.add("on"); }
+          updatePreview();
+        });
+        grid.appendChild(chip);
       });
-      presetList.appendChild(btn);
+      wrap.appendChild(grid);
+      composerBody.appendChild(wrap);
+    });
+
+    // hearts counter
+    var hs = document.createElement("section");
+    hs.className = "composer-section";
+    hs.innerHTML =
+      '<h3>How many hearts?</h3>' +
+      '<div class="hearts-row">' +
+        '<button class="heart-tap" id="heart-tap" aria-label="Add a heart">❤️</button>' +
+        '<div class="hearts-count"><b id="hearts-n">0</b> hearts <span>I love you</span></div>' +
+        '<button class="heart-reset" id="heart-reset">reset</button>' +
+      '</div>';
+    composerBody.appendChild(hs);
+
+    document.getElementById("heart-tap").addEventListener("click", function () {
+      hearts = Math.min(hearts + 1, 999);
+      document.getElementById("hearts-n").textContent = hearts;
+      bump(this);
+      updatePreview();
+    });
+    document.getElementById("heart-reset").addEventListener("click", function () {
+      hearts = 0;
+      document.getElementById("hearts-n").textContent = 0;
+      updatePreview();
     });
   }
 
-  sheetBack.addEventListener("click", function () { renderSheet(PRESETS, "How's it going?", false); });
-  backdrop.addEventListener("click", closeSheet);
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+  function selectedItems() {
+    return Object.keys(selectedKeys).map(function (k) { return selectedKeys[k]; });
+  }
+
+  function updatePreview() {
+    var items = selectedItems();
+    var parts = items.map(function (it) { return it.emoji + " " + it.text; });
+    if (hearts > 0) parts.push("❤️×" + hearts + " I love you");
+    var has = parts.length > 0;
+    composerPrev.textContent = has ? parts.join("  ·  ") : "Nothing selected yet";
+    composerSend.disabled = !has;
+  }
+
+  composerSend.addEventListener("click", function () {
+    var items = selectedItems();
+    Store.setStatus(me, { items: items, hearts: hearts });
+    closeComposer();
+  });
+  composerClose.addEventListener("click", closeComposer);
+
+  /* ---------- Our Story ---------- */
+  function openStory() {
+    if (!timeline.childNodes.length) buildStory();
+    storyEl.hidden = false;
+  }
+  function buildStory() {
+    STORY.forEach(function (node, i) {
+      var li = document.createElement("li");
+      li.className = "tl-item " + (i % 2 ? "right" : "left");
+      li.innerHTML =
+        '<span class="tl-dot"></span>' +
+        '<div class="tl-card"><span class="tl-emoji">' + node.emoji + "</span>" +
+        '<span class="tl-label">' + esc(node.label) + "</span></div>";
+      timeline.appendChild(li);
+    });
+  }
+  storyBtn.addEventListener("click", openStory);
+  storyClose.addEventListener("click", function () { storyEl.hidden = true; });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!composer.hidden) closeComposer();
+    else if (!storyEl.hidden) storyEl.hidden = true;
+  });
 
   /* ---------- helpers ---------- */
+  function bump(el) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
-  function relTime(ts) {
+  // "Mon, Sep 1 · 3:14 PM" — date AND time
+  function stamp(ts) {
     if (!ts) return "—";
-    var diff = Date.now() - ts;
-    if (diff < 45000) return "just now";
-    var m = Math.round(diff / 60000);
-    if (m < 60) return m + "m ago";
-    var h = Math.round(diff / 3600000);
-    if (h < 24) return h + "h ago";
     var d = new Date(ts);
-    return d.toLocaleDateString([], { weekday: "short" }) + " " +
-           d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    var date = d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+    var time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return date + " · " + time;
   }
 })();
