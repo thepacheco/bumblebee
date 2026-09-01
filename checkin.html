@@ -21,11 +21,11 @@
       <h1>Who's checking in?</h1>
       <p>Just the two of us.</p>
       <div class="who-row" id="who-row">
-        <button class="who-btn" data-who="nama">
-          <img src="assets/elephant.svg" alt="" /><b>Nama</b>
+        <button class="who-btn" data-who="nama" aria-label="Elephant">
+          <img src="assets/elephant.svg" alt="Elephant" />
         </button>
-        <button class="who-btn" data-who="you">
-          <img src="assets/bee.svg" alt="" /><b>Me</b>
+        <button class="who-btn" data-who="you" aria-label="Bee">
+          <img src="assets/bee.svg" alt="Bee" />
         </button>
       </div>
       <div class="pin-row" id="pin-row">
@@ -43,8 +43,8 @@
   <main class="split" id="board" hidden>
     <!-- Nama (elephant) -->
     <section class="pane pane-nama" data-side="nama">
-      <img class="avatar" src="assets/elephant.svg" alt="Nama" />
-      <div class="name">Nama <span class="dot" data-dot="nama"></span></div>
+      <img class="avatar" src="assets/elephant.svg" alt="Elephant" />
+      <div class="name"><span class="dot" data-dot="nama"></span></div>
       <div class="status-bubble" data-status="nama">—</div>
       <div class="status-meta" data-meta="nama">No check-in yet</div>
       <div class="pane-me-actions" data-actions="nama" hidden>
@@ -55,8 +55,8 @@
 
     <!-- You (bee) -->
     <section class="pane pane-you" data-side="you">
-      <img class="avatar" src="assets/bee.svg" alt="Me" />
-      <div class="name">Me <span class="dot" data-dot="you"></span></div>
+      <img class="avatar" src="assets/bee.svg" alt="Bee" />
+      <div class="name"><span class="dot" data-dot="you"></span></div>
       <div class="status-bubble" data-status="you">—</div>
       <div class="status-meta" data-meta="you">No check-in yet</div>
       <div class="pane-me-actions" data-actions="you" hidden>

@@ -9,8 +9,6 @@
   var BEAT_EVERY   = 8000;   // send a heartbeat this often while the page is open
   var TICK_EVERY   = 5000;   // re-render presence/relative-time this often
 
-  var PEOPLE = { nama: "Nama", you: "Me" };
-
   /* ---------- presets ---------- */
   // A node is either a category ({label, children:[...]}) or a leaf ({emoji,text}).
   var PRESETS = [

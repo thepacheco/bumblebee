@@ -28,7 +28,7 @@ folder with any static host.
 
 ## The check-in page
 
-- Pick who you are (Nama 🐘 / Me 🐝). Your choice is remembered on that device.
+- Pick your side (🐘 elephant / 🐝 bee) — no names. Your choice is remembered on that device.
 - **Presets only — no free text ever.** Categories (*What am I doing? / How am I
   feeling?*) expand into taps like *Working, Resting, Sleepy, Missing you*, plus
   two one-tap notes (*Thinking of you, My heart hurts*).
