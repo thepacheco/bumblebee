@@ -36,11 +36,12 @@ folder with any static host.
 - Pick your side (🐘 elephant / 🐝 bee) — no names. Remembered on that device.
 - **Presets only — no free text.** The composer is a tap-friendly grid where you
   **pick as many as you like** across sections, then hit **Update status**:
-  - *What am I doing?* — Working, Resting, Out & about, Studying, Driving, Dropping off, Being stupid
-  - *What am I feeling?* — Sleepy, Happy, Stressed, Missing you
-  - *Plans for today?* — Going out, Family, An event, Cooking, Cleaning
-  - *What do you want to do to me?* — Tuck you in, Hold you, Kiss you, Hot for you, All the above
-  - *A little note* — Thinking of you 💛, My heart hurts 💔
+  - *What am I doing?* — Working, Resting, Out & about, Driving, Running errands, Dropping off to school, Being stupid
+  - *What am I feeling?* — Sleepy, Happy, Stressed, Missing you, Gosh
+  - *Plans for today?* — Going out, Family, Family eating, An event, Cooking, Cleaning, At the park
+  - *What am I missing most?* — Eyes, Ears, Nose, Face, Lips, Smile, Voice, Your hugs
+  - *What do you want to do to me?* — Tuck you in, Hold you, Kiss you, Hold your cheek, Hot for you, All the above
+  - *A little note* — Thinking of you 💛, My heart hurts 💔, **plus a free-text comment box**
   - *How many hearts?* — tap **anywhere in the box** to add hearts ("I love you ×N")
 - Your selection **replaces** your current status and stamps it with the
   **date and time** of the check-in.

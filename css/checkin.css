@@ -75,6 +75,7 @@ body.checkin-open { overflow: hidden; }
 }
 .chip-mini .emoji { font-size: 1.1rem; }
 .chip-mini.heart { background: rgba(217,140,154,.2); }
+.chip-mini.note { background: rgba(232,163,61,.18); font-style: italic; }
 .status-meta { margin-top: .7rem; font-size: .8rem; color: rgba(255,255,255,.55); }
 
 .pane-me-actions { margin-top: 1.2rem; }
@@ -149,6 +150,16 @@ body.checkin-open { overflow: hidden; }
 .chip:active { transform: scale(.97); }
 .chip .emoji { font-size: 1.25rem; }
 .chip.on { border-color: var(--honey); background: rgba(232,163,61,.16); }
+
+/* free-text little note */
+.note-input {
+  width: 100%; margin-top: .7rem; box-sizing: border-box;
+  background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.12);
+  color: var(--cream); border-radius: 14px; padding: .8rem 1rem;
+  font-size: .95rem; font-family: var(--font-body);
+}
+.note-input:focus { outline: none; border-color: var(--honey); }
+.note-input::placeholder { color: rgba(255,255,255,.4); }
 
 /* hearts — the whole box is tappable */
 .hearts-row { display: flex; align-items: center; gap: 1rem; background: rgba(217,140,154,.1); border: 1px solid rgba(217,140,154,.25); border-radius: 16px; padding: 1rem 1.1rem; cursor: pointer; user-select: none; transition: background .15s; }

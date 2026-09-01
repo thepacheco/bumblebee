@@ -16,32 +16,46 @@
       { emoji: "💻", text: "Working" },
       { emoji: "😴", text: "Resting" },
       { emoji: "🚶", text: "Out & about" },
-      { emoji: "📚", text: "Studying" },
       { emoji: "🚗", text: "Driving" },
-      { emoji: "📦", text: "Dropping off" },
+      { emoji: "🛒", text: "Running errands" },
+      { emoji: "🏫", text: "Dropping off to school" },
       { emoji: "🤪", text: "Being stupid" }
     ]},
     { title: "What am I feeling?", items: [
       { emoji: "😪", text: "Sleepy" },
       { emoji: "😊", text: "Happy" },
       { emoji: "😮‍💨", text: "Stressed" },
-      { emoji: "🥺", text: "Missing you" }
+      { emoji: "🥺", text: "Missing you" },
+      { emoji: "😵‍💫", text: "Gosh" }
     ]},
     { title: "Plans for today?", items: [
       { emoji: "🎉", text: "Going out" },
       { emoji: "👨‍👩‍👧", text: "Family" },
+      { emoji: "🍽️", text: "Family eating" },
       { emoji: "🎟️", text: "An event" },
       { emoji: "🍳", text: "Cooking" },
-      { emoji: "🧹", text: "Cleaning" }
+      { emoji: "🧹", text: "Cleaning" },
+      { emoji: "🏞️", text: "At the park" }
+    ]},
+    { title: "What am I missing most?", items: [
+      { emoji: "👀", text: "Eyes" },
+      { emoji: "👂", text: "Ears" },
+      { emoji: "👃", text: "Nose" },
+      { emoji: "🙂", text: "Face" },
+      { emoji: "👄", text: "Lips" },
+      { emoji: "😁", text: "Smile" },
+      { emoji: "🗣️", text: "Voice" },
+      { emoji: "🤗", text: "Your hugs" }
     ]},
     { title: "What do you want to do to me?", items: [
       { emoji: "🛏️", text: "Tuck you in" },
       { emoji: "🤗", text: "Hold you" },
       { emoji: "😘", text: "Kiss you" },
+      { emoji: "🤲", text: "Hold your cheek" },
       { emoji: "🔥", text: "Hot for you" },
       { emoji: "💫", text: "All the above" }
     ]},
-    { title: "A little note", items: [
+    { title: "A little note", comment: true, items: [
       { emoji: "💛", text: "Thinking of you" },
       { emoji: "💔", text: "My heart hurts" }
     ]}
@@ -104,6 +118,7 @@
   var latest = null;
   var selectedKeys = {};
   var hearts = 0;
+  var noteText = "";
 
   /* ---------- open / close the overlay ---------- */
   window.openCheckin = function () {
@@ -200,8 +215,8 @@
       var dot    = document.querySelector('#checkin-overlay [data-dot="' + side + '"]');
       if (!bubble) return;
 
-      if (s.items.length || s.hearts > 0) {
-        bubble.innerHTML = renderChips(s.items, s.hearts);
+      if (s.items.length || s.hearts > 0 || s.note) {
+        bubble.innerHTML = statusHtml(s);
         meta.textContent = "Last check-in · " + stamp(s.at);
       } else {
         bubble.textContent = "—";
@@ -217,15 +232,25 @@
     var items = [];
     if (s.status && s.status.items) items = s.status.items;
     else if (s.status && s.status.text) items = [{ emoji: s.status.emoji || "", text: s.status.text }];
-    return { items: items, hearts: (s.status && s.status.hearts) || 0, at: s.at || 0, beat: s.beat || 0 };
+    return {
+      items: items,
+      hearts: (s.status && s.status.hearts) || 0,
+      note: (s.status && s.status.note) || "",
+      at: s.at || 0,
+      beat: s.beat || 0
+    };
   }
 
-  function renderChips(items, heartCount) {
-    var chips = (items || []).map(function (it) {
+  // one renderer for both the board and the history (shows everything)
+  function statusHtml(s) {
+    var chips = (s.items || []).map(function (it) {
       return '<span class="chip-mini"><span class="emoji">' + esc(it.emoji) + "</span>" + esc(it.text) + "</span>";
     });
-    if (heartCount > 0) {
-      chips.push('<span class="chip-mini heart"><span class="emoji">❤️</span>×' + heartCount + " I love you</span>");
+    if (s.hearts > 0) {
+      chips.push('<span class="chip-mini heart"><span class="emoji">❤️</span>×' + s.hearts + " I love you</span>");
+    }
+    if (s.note) {
+      chips.push('<span class="chip-mini note"><span class="emoji">💬</span>' + esc(s.note) + "</span>");
     }
     return chips.join("");
   }
@@ -234,6 +259,7 @@
   function openComposer() {
     selectedKeys = {};
     hearts = 0;
+    noteText = "";
     buildComposer();
     updatePreview();
     composer.hidden = false;
@@ -265,6 +291,23 @@
         grid.appendChild(chip);
       });
       wrap.appendChild(grid);
+
+      // free-text comment for flagged sections (the little note)
+      if (sec.comment) {
+        var input = document.createElement("input");
+        input.className = "note-input";
+        input.id = "note-input";
+        input.type = "text";
+        input.maxLength = 140;
+        input.placeholder = "Write a little note… (optional)";
+        input.value = noteText;
+        input.addEventListener("input", function () {
+          noteText = input.value;
+          updatePreview();
+        });
+        wrap.appendChild(input);
+      }
+
       composerBody.appendChild(wrap);
     });
 
@@ -310,13 +353,15 @@
     var items = selectedItems();
     var parts = items.map(function (it) { return it.emoji + " " + it.text; });
     if (hearts > 0) parts.push("❤️×" + hearts + " I love you");
+    var note = noteText.trim();
+    if (note) parts.push("💬 " + note);
     var has = parts.length > 0;
     composerPrev.textContent = has ? parts.join("  ·  ") : "Nothing selected yet";
     composerSend.disabled = !has;
   }
 
   composerSend.addEventListener("click", function () {
-    Store.setStatus(me, { items: selectedItems(), hearts: hearts });
+    Store.setStatus(me, { items: selectedItems(), hearts: hearts, note: noteText.trim() });
     closeComposer();
   });
   composerClose.addEventListener("click", closeComposer);
@@ -361,7 +406,7 @@
       li.className = "hist-item";
       li.innerHTML =
         '<img class="hist-av" src="' + avatar + '" alt="" />' +
-        '<div class="hist-main"><div class="hist-chips">' + renderChips(s.items, s.hearts) + "</div>" +
+        '<div class="hist-main"><div class="hist-chips">' + statusHtml(s) + "</div>" +
         '<div class="hist-time">' + stamp(e.at) + "</div></div>";
       histList.appendChild(li);
     });
