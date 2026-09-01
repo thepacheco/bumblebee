@@ -124,11 +124,9 @@
   window.openCheckin = function () {
     overlay.hidden = false;
     document.body.classList.add("checkin-open");
-    var savedMe = null;
-    try { savedMe = localStorage.getItem("honeydrop.me"); } catch (e) {}
-    if (me || savedMe === "nama" || savedMe === "you") enter(me || savedMe);
-    else showGate();
-    if (me) Store.heartbeat(me);
+    // Always ask who's checking in — never auto-assign a side, so a wrong
+    // tap last time can't post as the wrong person.
+    showGate();
   };
   function closeOverlay() {
     overlay.hidden = true;
@@ -138,20 +136,38 @@
     if (!histEl.hidden) histEl.hidden = true;
   }
 
-  function showGate() { gate.hidden = false; board.hidden = true; storyBtn.hidden = true; histBtn.hidden = true; }
+  function showGate() {
+    gate.hidden = false;
+    board.hidden = true;
+    storyBtn.hidden = true;
+    histBtn.hidden = true;
+    // reset the picker every time so nothing is pre-chosen
+    Array.prototype.forEach.call(whoRow.children, function (b) { b.classList.remove("sel"); });
+    whoRow.__sel = null;
+    pinRow.classList.remove("show");
+    pinInput.value = "";
+    gateErr.textContent = "";
+    enterBtn.disabled = true;
+  }
 
   /* ---------- gate ---------- */
   whoRow.addEventListener("click", function (e) {
     var btn = e.target.closest(".who-btn");
     if (!btn) return;
-    whoRow.__sel = btn.getAttribute("data-who");
+    var who = btn.getAttribute("data-who");
     Array.prototype.forEach.call(whoRow.children, function (b) { b.classList.remove("sel"); });
     btn.classList.add("sel");
+    whoRow.__sel = who;
     gateErr.textContent = "";
-    var needsPin = PINS[whoRow.__sel] && PINS[whoRow.__sel].length > 0;
-    pinRow.classList.toggle("show", needsPin);
-    enterBtn.disabled = false;
-    if (needsPin) { pinInput.value = ""; pinInput.focus(); }
+    var needsPin = PINS[who] && PINS[who].length > 0;
+    if (needsPin) {
+      pinRow.classList.add("show");
+      enterBtn.disabled = false;
+      pinInput.value = ""; pinInput.focus();
+    } else {
+      // one deliberate tap picks the side (no separate confirm, no auto-assign)
+      enter(who);
+    }
   });
 
   enterBtn.addEventListener("click", tryEnter);
@@ -196,6 +212,11 @@
     b.addEventListener("click", function () {
       if (b.getAttribute("data-open") === me) openComposer();
     });
+  });
+
+  // "not you? switch" — go back to the picker to change sides
+  document.querySelectorAll("#checkin-overlay [data-switch]").forEach(function (b) {
+    b.addEventListener("click", showGate);
   });
 
   Store.subscribe(render);

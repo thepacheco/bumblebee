@@ -63,17 +63,19 @@ body.checkin-open { overflow: hidden; }
 .dot.online { background: #5ad07a; box-shadow: 0 0 0 4px rgba(90,208,122,.2); }
 
 .status-bubble {
-  margin-top: 1rem; max-width: 34ch;
+  margin-top: 1rem; max-width: min(92vw, 42ch);
+  max-height: 42vh; overflow-y: auto;
   display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
   font-size: 1.05rem; min-height: 1.2em; line-height: 1.4;
 }
 .status-bubble:empty::before { content: "—"; }
 .chip-mini {
   display: inline-flex; align-items: center; gap: .35rem;
-  background: rgba(255,255,255,.09); border-radius: 999px; padding: .4rem .8rem;
-  font-size: .92rem;
+  background: rgba(255,255,255,.09); border-radius: 14px; padding: .4rem .8rem;
+  font-size: .92rem; max-width: 100%;
+  white-space: normal; overflow-wrap: anywhere; text-align: left;
 }
-.chip-mini .emoji { font-size: 1.1rem; }
+.chip-mini .emoji { font-size: 1.1rem; flex: 0 0 auto; }
 .chip-mini.heart { background: rgba(217,140,154,.2); }
 .chip-mini.note { background: rgba(232,163,61,.18); font-style: italic; }
 .status-meta { margin-top: .7rem; font-size: .8rem; color: rgba(255,255,255,.55); }
@@ -85,6 +87,12 @@ body.checkin-open { overflow: hidden; }
   font-size: .95rem; transition: transform .12s, box-shadow .2s;
 }
 .check-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-s); }
+.switch-link {
+  display: block; margin: .8rem auto 0; background: none; border: 0;
+  color: rgba(255,255,255,.55); font-size: .82rem; cursor: pointer;
+  font-family: var(--font-body); text-decoration: underline;
+}
+.switch-link:hover { color: var(--cream); }
 
 /* small home escape hatch (back to boba) */
 .leave { position: fixed; top: 1rem; right: 1rem; z-index: 30; background: rgba(0,0,0,.25); border: 0; color: rgba(255,255,255,.55); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem; }
