@@ -13,9 +13,12 @@ separate page to stumble onto.
 | `css/styles.css` | Shared design tokens + public-site styles |
 | `css/checkin.css` | Check-in overlay styles (reuses the same tokens) |
 | `js/main.js` | Hero slider, mobile nav, and the bee-logo trigger |
-| `js/store.js` | The sync layer — **localStorage by default** |
-| `js/store-firebase.js` | Optional drop-in for real cross-device sync (see below) |
+| `js/store-vercel.js` | **Active sync layer** — Vercel Postgres via `/api/state`, with localStorage fallback |
+| `api/state.js` | Vercel serverless function — reads/writes the Postgres tables |
+| `js/store.js` | Pure-localStorage sync layer (reference / offline) |
+| `js/store-firebase.js` | Alternative drop-in for Firebase real-time sync |
 | `js/checkin.js` | Check-in logic — presets, hearts, presence, history, story |
+| `package.json` | Declares `@vercel/postgres` so Vercel installs it |
 | `assets/` | Inline SVG bee + elephant logos |
 
 No build step, no dependencies. Open `index.html` in a browser, or serve the
@@ -48,19 +51,33 @@ folder with any static host.
   past check-in (who, what, date/time).
 - Optional PIN per person in `js/checkin.js` (`PINS` — empty = no PIN).
 
-## Making it sync across devices (the database)
+## The database (Vercel Postgres — all in Vercel)
 
-Out of the box, `js/store.js` uses `localStorage`, so it syncs between tabs on
-the **same browser** — perfect for testing. For you and the elephant on two
-different phones, follow the ~5-minute setup at the top of
-**`js/store-firebase.js`**: create a free Firebase project, paste its config,
-and swap the script tags in `index.html`. Nothing else changes — the app only
-ever calls `Store.subscribe()`, `Store.setStatus()`, and `Store.heartbeat()`.
+The site talks to `/api/state` (the `api/state.js` serverless function), which
+stores everything in a **Vercel Postgres** database:
 
-That backend also gives **reliable online/offline presence across two users**:
-each side writes a heartbeat while their overlay is open, and Firebase's
-`onDisconnect` zeroes it the instant a tab closes — so the other person sees you
-go offline right away. The shared **history log** lives in the same database.
+- `presence` — each side's current status + last-seen ("lock-on") time
+- `checkins` — the full timestamped history of every check-in
+
+**One-time setup in the Vercel dashboard:** open the project → **Storage** tab →
+**Create Database → Postgres** → connect it to this project. That injects the
+`POSTGRES_URL` environment variable, which `@vercel/postgres` reads
+automatically. Redeploy and you're done — both phones now share the same status,
+online state, and history.
+
+Until a database is connected, `js/store-vercel.js` **falls back to
+localStorage** automatically, so the site keeps working (per-browser) and
+upgrades itself to the shared database the moment `/api/state` responds.
+
+Online/offline is polling-based (a refresh every few seconds). If you'd rather
+have instant presence, `js/store-firebase.js` is an alternative backend using
+Firebase `onDisconnect` — swap the script tag in `index.html`.
+
+## Analytics
+
+`index.html` loads Vercel Web Analytics (`/_vercel/insights/script.js`). Turn it
+on in the project's **Analytics** tab in the Vercel dashboard to start collecting
+page views.
 
 ## Swapping in real photos
 
