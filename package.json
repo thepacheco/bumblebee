@@ -4,6 +4,6 @@
   "private": true,
   "description": "Honey Bee Boba — public boba site with a hidden two-person check-in, backed by Vercel Postgres.",
   "dependencies": {
-    "@vercel/postgres": "^0.10.0"
+    "@neondatabase/serverless": "^0.10.4"
   }
 }

@@ -1,25 +1,35 @@
 # 🐝 Bumblebee — Honey Bee Boba
 
-A public boba/milk-tea site (**Honey Bee Boba**) that quietly doubles as a private
-status check-in for two people. To everyone else it's just a tea shop. Tap the
-right thing and a hidden check-in **opens right on the homepage** — there's no
-separate page to stumble onto.
+A public **boba recipes** site (**Honey Bee Boba**) that quietly doubles as a
+private status check-in for two people. To everyone else it's a recipe site. Tap
+the right thing and a hidden check-in **opens right on the homepage** — there's
+no separate page to stumble onto.
 
 ## What's here
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | The public site **and** the hidden check-in overlay |
-| `css/styles.css` | Shared design tokens + public-site styles |
+| `index.html` | The public recipes site **and** the hidden check-in overlay |
+| `css/styles.css` | Design tokens + recipes-site styles (cards, modal, lightbox) |
 | `css/checkin.css` | Check-in overlay styles (reuses the same tokens) |
-| `js/main.js` | Hero slider, mobile nav, and the bee-logo trigger |
-| `js/store-vercel.js` | **Active sync layer** — Vercel Postgres via `/api/state`, with localStorage fallback |
+| `js/recipes.js` | Recipe data, cards, the detail modal, and the image lightbox |
+| `js/main.js` | Mobile nav + the bee-logo trigger |
+| `js/store-vercel.js` | **Active sync layer** — Neon Postgres via `/api/state`, with localStorage fallback |
 | `api/state.js` | Vercel serverless function — reads/writes the Postgres tables |
 | `js/store.js` | Pure-localStorage sync layer (reference / offline) |
 | `js/store-firebase.js` | Alternative drop-in for Firebase real-time sync |
 | `js/checkin.js` | Check-in logic — presets, hearts, presence, history, story |
-| `package.json` | Declares `@vercel/postgres` so Vercel installs it |
+| `package.json` | Declares `@neondatabase/serverless` so Vercel installs it |
 | `assets/` | Inline SVG bee + elephant logos |
+
+## The recipes site
+
+Real bubble-tea recipes (classic milk tea, brown sugar boba, matcha, taro, Thai
+tea, strawberry fruit tea) plus two basics (cooking pearls, brown sugar syrup).
+Tap a card to open the full ingredients + steps; tap any recipe or gallery photo
+to open it in a full-size **lightbox**. Photos are real Creative-Commons images
+pulled live by keyword from LoremFlickr — set any recipe's `img`/`keys` in
+`js/recipes.js` to use your own specific photo URL instead.
 
 No build step, no dependencies. Open `index.html` in a browser, or serve the
 folder with any static host.
