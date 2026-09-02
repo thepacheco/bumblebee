@@ -4,7 +4,7 @@
  *   presence  — each side's current status + last-seen ("lock-on") time
  *   checkins  — the full timestamped history of every check-in
  *
- *   GET  /api/state                      -> { nama, you, log }
+ *   GET  /api/state                      -> { tifajan, you, log }
  *   POST /api/state {action:'status', side, status}
  *   POST /api/state {action:'heartbeat', side}
  *
@@ -30,7 +30,7 @@ function connString() {
 
 function emptyState() {
   return {
-    nama: { status: null, at: 0, beat: 0 },
+    tifajan: { status: null, at: 0, beat: 0 },
     you:  { status: null, at: 0, beat: 0 },
     log:  []
   };
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       const log  = await sql`SELECT side, status, at FROM checkins ORDER BY at DESC LIMIT ${LOG_CAP}`;
       const state = emptyState();
       for (const r of pres) {
-        if (r.side === "nama" || r.side === "you") {
+        if (r.side === "tifajan" || r.side === "you") {
           state[r.side] = { status: r.status, at: Number(r.at), beat: Number(r.beat) };
         }
       }
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
       const side = body.side;
-      if (side !== "nama" && side !== "you") return res.status(400).json({ error: "bad_side" });
+      if (side !== "tifajan" && side !== "you") return res.status(400).json({ error: "bad_side" });
       const now = Date.now();
 
       if (body.action === "heartbeat") {

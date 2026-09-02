@@ -5,7 +5,7 @@
   "use strict";
 
   /* ---------- config ---------- */
-  var PINS = { nama: "", you: "" };   // "" = no PIN for that side
+  var PINS = { tifajan: "", you: "" };   // "" = no PIN for that side
   var ONLINE_WINDOW = 20000;          // ms since last heartbeat to count as "online"
   var BEAT_EVERY   = 8000;
   var TICK_EVERY   = 5000;
@@ -63,26 +63,40 @@
 
   /* ---------- story timeline (parrot button) ---------- */
   var STORY = [
-    { emoji: "🏠", label: "House" },
-    { emoji: "☃️", label: "Snowman" },
-    { emoji: "🌩️", label: "Storm" },
-    { emoji: "🛌", label: "Blanket" },
-    { emoji: "🐝", label: "Bee" },
-    { emoji: "🦘", label: "Kangaroo" },
-    { emoji: "😜", label: "Lalalalala" },
-    { emoji: "🎖️", label: "Badge" },
-    { emoji: "🚗", label: "Car" },
-    { emoji: "✋", label: "Hand" },
-    { emoji: "⚡", label: "Lightning" },
-    { emoji: "✈️", label: "Plane" },
-    { emoji: "🤐", label: "Silent" },
-    { emoji: "💬", label: "Texting" },
-    { emoji: "♨️", label: "Hot water" },
-    { emoji: "🍽️", label: "Dinner" },
-    { emoji: "🚗", label: "Car" },
-    { emoji: "⚖️", label: "" },
-    { emoji: "👵👴", label: "The bench" }
+    { era: "Childhood", items: [
+      { emoji: "🏠", label: "House" },
+      { emoji: "☃️", label: "Snowman" },
+      { emoji: "🌩️", label: "Storm" },
+      { emoji: "🛌", label: "Blanket" },
+      { emoji: "🐝", label: "Bee" },
+      { emoji: "🦘", label: "Kangaroo" },
+      { emoji: "😜", label: "Lalalalala" }
+    ]},
+    { era: "Past", items: [
+      { emoji: "🎖️", label: "Badge" },
+      { emoji: "🚗", label: "Car" },
+      { emoji: "✋", label: "Hand" },
+      { emoji: "⚡", label: "Lightning" },
+      { emoji: "✈️", label: "Plane" },
+      { emoji: "🤐", label: "Silent" },
+      { emoji: "💬", label: "Texting" },
+      { emoji: "♨️", label: "Hot water" },
+      { emoji: "🏨", label: "Hotel" }
+    ]},
+    { era: "Present", items: [
+      { emoji: "🍽️", label: "Dinner" },
+      { emoji: "🚗", label: "Car" },
+      { emoji: "⚖️", label: "" }
+    ]},
+    { era: "Future", items: [
+      { emoji: "👵👴", label: "The bench" }
+    ]}
   ];
+
+  // Story photos: drop image files into assets/photos/ named 1.jpg, 2.jpg, …
+  // Ones that don't exist are hidden automatically.
+  var STORY_PHOTOS = [];
+  for (var _i = 1; _i <= 12; _i++) STORY_PHOTOS.push("assets/photos/" + _i + ".jpg");
 
   /* ---------- elements ---------- */
   var overlay   = document.getElementById("checkin-overlay");
@@ -229,7 +243,7 @@
   /* ---------- render board ---------- */
   function render(state) {
     latest = state;
-    ["nama", "you"].forEach(function (side) {
+    ["tifajan", "you"].forEach(function (side) {
       var s = normalize(state[side] || {});
       var bubble = document.querySelector('#checkin-overlay [data-status="' + side + '"]');
       var meta   = document.querySelector('#checkin-overlay [data-meta="' + side + '"]');
@@ -387,24 +401,72 @@
   });
   composerClose.addEventListener("click", closeComposer);
 
-  /* ---------- story ---------- */
+  /* ---------- story: photos + era timeline ---------- */
+  var storyPhotos = document.getElementById("story-photos");
+  var ciLight     = document.getElementById("ci-lightbox");
+  var ciLightImg  = document.getElementById("ci-light-img");
+  var ciLightClose= document.getElementById("ci-light-close");
+  var ciLightInner= document.getElementById("ci-light-inner");
+
+  function buildStoryPhotos() {
+    if (!storyPhotos) return;
+    storyPhotos.innerHTML = "";
+    STORY_PHOTOS.forEach(function (src) {
+      var btn = document.createElement("button");
+      btn.className = "photo-item";
+      btn.setAttribute("data-photo", src);
+      var img = document.createElement("img");
+      img.loading = "lazy";
+      img.alt = "Our photo";
+      img.src = src;
+      img.addEventListener("error", function () { btn.remove(); checkEmptyPhotos(); });
+      btn.appendChild(img);
+      storyPhotos.appendChild(btn);
+    });
+    checkEmptyPhotos();
+  }
+  function checkEmptyPhotos() {
+    if (storyPhotos && !storyPhotos.querySelector(".photo-item")) {
+      storyPhotos.innerHTML = '<p class="photo-empty">Add photos to <code>assets/photos/</code> (named 1.jpg, 2.jpg, …) and they\'ll show up here.</p>';
+    }
+  }
+
   function buildStory() {
-    STORY.forEach(function (node, i) {
-      var li = document.createElement("li");
-      li.className = "tl-item " + (i % 2 ? "right" : "left");
-      li.innerHTML =
-        '<span class="tl-dot"></span>' +
-        '<div class="tl-card"><span class="tl-emoji">' + node.emoji + "</span>" +
-        (node.label ? '<span class="tl-label">' + esc(node.label) + "</span>" : "") +
-        "</div>";
-      timeline.appendChild(li);
+    timeline.innerHTML = "";
+    STORY.forEach(function (group) {
+      var head = document.createElement("li");
+      head.className = "tl-era";
+      head.innerHTML = "<span>" + esc(group.era) + "</span>";
+      timeline.appendChild(head);
+      group.items.forEach(function (node, i) {
+        var li = document.createElement("li");
+        li.className = "tl-item " + (i % 2 ? "right" : "left");
+        li.innerHTML =
+          '<span class="tl-dot"></span>' +
+          '<div class="tl-card"><span class="tl-emoji">' + node.emoji + "</span>" +
+          (node.label ? '<span class="tl-label">' + esc(node.label) + "</span>" : "") +
+          "</div>";
+        timeline.appendChild(li);
+      });
     });
   }
+
   storyBtn.addEventListener("click", function () {
-    if (!timeline.childNodes.length) buildStory();
+    buildStoryPhotos();
+    buildStory();
     storyEl.hidden = false;
   });
   storyClose.addEventListener("click", function () { storyEl.hidden = true; });
+
+  // photo viewer
+  function openPhoto(src) { ciLightImg.src = src; ciLight.hidden = false; }
+  function closePhoto() { ciLight.hidden = true; ciLightImg.src = ""; }
+  if (storyPhotos) storyPhotos.addEventListener("click", function (e) {
+    var b = e.target.closest(".photo-item");
+    if (b) openPhoto(b.getAttribute("data-photo"));
+  });
+  if (ciLightClose) ciLightClose.addEventListener("click", closePhoto);
+  if (ciLightInner) ciLightInner.addEventListener("click", closePhoto);
 
   /* ---------- history ---------- */
   histBtn.addEventListener("click", function () {
@@ -422,7 +484,7 @@
     }
     log.forEach(function (e) {
       var s = normalize({ status: e.status });
-      var avatar = e.side === "nama" ? "assets/elephant.svg" : "assets/bee.svg";
+      var avatar = e.side === "tifajan" ? "assets/elephant.svg" : "assets/bee.svg";
       var li = document.createElement("li");
       li.className = "hist-item";
       li.innerHTML =
@@ -436,7 +498,8 @@
   /* ---------- keyboard ---------- */
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape" || overlay.hidden) return;
-    if (!composer.hidden) closeComposer();
+    if (ciLight && !ciLight.hidden) closePhoto();
+    else if (!composer.hidden) closeComposer();
     else if (!storyEl.hidden) storyEl.hidden = true;
     else if (!histEl.hidden) histEl.hidden = true;
     else closeOverlay();

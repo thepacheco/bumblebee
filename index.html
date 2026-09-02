@@ -133,7 +133,7 @@
         <h1>Who's checking in?</h1>
         <p>Just the two of us.</p>
         <div class="who-row" id="who-row">
-          <button class="who-btn" data-who="nama" aria-label="Elephant">
+          <button class="who-btn" data-who="tifajan" aria-label="Elephant">
             <img src="assets/elephant.svg" alt="Elephant" />
           </button>
           <button class="who-btn" data-who="you" aria-label="Bee">
@@ -150,17 +150,17 @@
     </div>
 
     <button class="leave" id="leave" aria-label="Close" title="Close">✕</button>
-    <button class="story-btn" id="story-btn" aria-label="Our story" hidden>🦜</button>
+    <button class="story-btn" id="story-btn" aria-label="Our story" hidden>📖</button>
     <button class="hist-btn" id="hist-btn" aria-label="History" hidden>🕘</button>
 
     <main class="split" id="board" hidden>
-      <section class="pane pane-nama" data-side="nama">
+      <section class="pane pane-tifajan" data-side="tifajan">
         <img class="avatar" src="assets/elephant.svg" alt="Elephant" />
-        <div class="name"><span class="dot" data-dot="nama"></span></div>
-        <div class="status-bubble" data-status="nama">—</div>
-        <div class="status-meta" data-meta="nama">No check-in yet</div>
-        <div class="pane-me-actions" data-actions="nama" hidden>
-          <button class="check-btn" data-open="nama">Check in</button>
+        <div class="name"><span class="dot" data-dot="tifajan"></span></div>
+        <div class="status-bubble" data-status="tifajan">—</div>
+        <div class="status-meta" data-meta="tifajan">No check-in yet</div>
+        <div class="pane-me-actions" data-actions="tifajan" hidden>
+          <button class="check-btn" data-open="tifajan">Check in</button>
           <button class="switch-link" data-switch>↺ Not you? Switch</button>
         </div>
       </section>
@@ -192,9 +192,18 @@
     <div class="story" id="story" hidden role="dialog" aria-modal="true" aria-label="Story">
       <header class="story-head">
         <button class="composer-close" id="story-close" aria-label="Close">✕</button>
-        <h2>🦜</h2>
+        <h2>📖</h2>
       </header>
-      <div class="story-body"><ol class="timeline" id="timeline"></ol></div>
+      <div class="story-body">
+        <div class="photo-grid" id="story-photos"></div>
+        <ol class="timeline" id="timeline"></ol>
+      </div>
+    </div>
+
+    <!-- image viewer for the story photos (sits above the overlay) -->
+    <div class="ci-lightbox" id="ci-lightbox" hidden>
+      <button class="composer-close" id="ci-light-close" aria-label="Close">✕</button>
+      <div class="ci-lightbox-inner" id="ci-light-inner"><img id="ci-light-img" src="" alt="Our photo" /></div>
     </div>
 
     <div class="story" id="history" hidden role="dialog" aria-modal="true" aria-label="History">

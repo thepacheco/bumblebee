@@ -34,7 +34,7 @@ window.Store = (function () {
 
   var LOG_CAP = 100;
   var EMPTY = {
-    nama: { status: null, at: 0, beat: 0 },
+    tifajan: { status: null, at: 0, beat: 0 },
     you:  { status: null, at: 0, beat: 0 }
   };
 
@@ -52,7 +52,7 @@ window.Store = (function () {
       if (log.length > LOG_CAP) log = log.slice(0, LOG_CAP);
     }
     return {
-      nama: Object.assign({}, EMPTY.nama, v.nama),
+      tifajan: Object.assign({}, EMPTY.tifajan, v.tifajan),
       you:  Object.assign({}, EMPTY.you,  v.you),
       log:  log
     };

@@ -4,14 +4,14 @@
  * localStorage (+ the cross-tab `storage` event) so the page works with zero
  * setup and syncs between tabs/windows on the same browser.
  *
- * To make it sync across DEVICES (you <-> Nama on separate phones), replace the
+ * To make it sync across DEVICES (you <-> Tifa Jan on separate phones), replace the
  * three methods below — read(), write(), and the change subscription — with
  * calls to a shared backend (a tiny KV endpoint, Firebase, Supabase, etc.).
  * Nothing else in the app needs to change: it only ever calls
  *   Store.subscribe(fn), Store.setStatus(side, status), Store.heartbeat(side).
  *
  * State shape:
- *   { nama: { status:{emoji,text}|null, at:ms|0, beat:ms|0 },
+ *   { tifajan: { status:{emoji,text}|null, at:ms|0, beat:ms|0 },
  *     you:  { status:{emoji,text}|null, at:ms|0, beat:ms|0 } }
  */
 window.Store = (function () {
@@ -23,7 +23,7 @@ window.Store = (function () {
   var LOG_CAP = 100;
 
   var EMPTY = {
-    nama: { status: null, at: 0, beat: 0 },
+    tifajan: { status: null, at: 0, beat: 0 },
     you:  { status: null, at: 0, beat: 0 },
     log:  []   // history of check-ins, newest first
   };
@@ -35,7 +35,7 @@ window.Store = (function () {
       var parsed = JSON.parse(raw);
       // shallow-merge to tolerate older/partial payloads
       return {
-        nama: Object.assign({}, EMPTY.nama, parsed.nama),
+        tifajan: Object.assign({}, EMPTY.tifajan, parsed.tifajan),
         you:  Object.assign({}, EMPTY.you,  parsed.you),
         log:  Array.isArray(parsed.log) ? parsed.log : []
       };

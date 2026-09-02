@@ -17,7 +17,7 @@ window.Store = (function () {
   var listeners = [];
   var useApi = true;                     // flips to false on first failed call
   var EMPTY = {
-    nama: { status: null, at: 0, beat: 0 },
+    tifajan: { status: null, at: 0, beat: 0 },
     you:  { status: null, at: 0, beat: 0 },
     log:  []
   };
@@ -33,7 +33,7 @@ window.Store = (function () {
       if (!r) return clone(EMPTY);
       var p = JSON.parse(r);
       return {
-        nama: Object.assign({}, EMPTY.nama, p.nama),
+        tifajan: Object.assign({}, EMPTY.tifajan, p.tifajan),
         you:  Object.assign({}, EMPTY.you,  p.you),
         log:  Array.isArray(p.log) ? p.log : []
       };
