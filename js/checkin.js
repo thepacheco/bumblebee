@@ -93,10 +93,6 @@
     ]}
   ];
 
-  // Story photos: drop image files into assets/photos/ named 1.jpg, 2.jpg, …
-  // Ones that don't exist are hidden automatically.
-  var STORY_PHOTOS = [];
-  for (var _i = 1; _i <= 12; _i++) STORY_PHOTOS.push("assets/photos/" + _i + ".jpg");
 
   /* ---------- elements ---------- */
   var overlay   = document.getElementById("checkin-overlay");
@@ -403,32 +399,108 @@
 
   /* ---------- story: photos + era timeline ---------- */
   var storyPhotos = document.getElementById("story-photos");
+  var photoAdd    = document.getElementById("photo-add");
+  var photoFile   = document.getElementById("photo-file");
+  var photoStatus = document.getElementById("photo-status");
   var ciLight     = document.getElementById("ci-lightbox");
   var ciLightImg  = document.getElementById("ci-light-img");
   var ciLightClose= document.getElementById("ci-light-close");
   var ciLightInner= document.getElementById("ci-light-inner");
 
-  function buildStoryPhotos() {
+  var PHOTO_API = "/api/photos";
+  function pStatus(t) { if (photoStatus) photoStatus.textContent = t || ""; }
+
+  // load the gallery from the database
+  function loadPhotos() {
     if (!storyPhotos) return;
-    storyPhotos.innerHTML = "";
-    STORY_PHOTOS.forEach(function (src) {
-      var btn = document.createElement("button");
-      btn.className = "photo-item";
-      btn.setAttribute("data-photo", src);
-      var img = document.createElement("img");
-      img.loading = "lazy";
-      img.alt = "Our photo";
-      img.src = src;
-      img.addEventListener("error", function () { btn.remove(); checkEmptyPhotos(); });
-      btn.appendChild(img);
-      storyPhotos.appendChild(btn);
-    });
-    checkEmptyPhotos();
+    fetch(PHOTO_API, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("api"); return r.json(); })
+      .then(function (d) {
+        var ph = (d && d.photos) || [];
+        if (!ph.length) {
+          storyPhotos.innerHTML = '<p class="photo-empty">No photos yet — tap “＋ Add photos”. Any file works, including iPhone HEIC.</p>';
+          return;
+        }
+        storyPhotos.innerHTML = ph.map(function (p) {
+          var url = PHOTO_API + "?id=" + encodeURIComponent(p.id);
+          return '<div class="photo-item"><img loading="lazy" src="' + url + '" data-photo="' + url + '" alt="Our photo" />' +
+                 '<button class="photo-del" data-del="' + p.id + '" aria-label="Delete photo">✕</button></div>';
+        }).join("");
+      })
+      .catch(function () {
+        storyPhotos.innerHTML = '<p class="photo-empty">Photos need the database connected (Storage → Postgres).</p>';
+      });
   }
-  function checkEmptyPhotos() {
-    if (storyPhotos && !storyPhotos.querySelector(".photo-item")) {
-      storyPhotos.innerHTML = '<p class="photo-empty">Add photos to <code>assets/photos/</code> (named 1.jpg, 2.jpg, …) and they\'ll show up here.</p>';
-    }
+
+  /* ---- upload (any file, incl. HEIC) ---- */
+  if (photoAdd && photoFile) {
+    photoAdd.addEventListener("click", function () { photoFile.click(); });
+    photoFile.addEventListener("change", function () {
+      var files = Array.prototype.slice.call(photoFile.files || []);
+      photoFile.value = "";
+      if (files.length) uploadFiles(files);
+    });
+  }
+
+  function uploadFiles(files) {
+    var done = 0, fail = 0;
+    pStatus("Uploading…");
+    var chain = Promise.resolve();
+    files.forEach(function (f) {
+      chain = chain.then(function () {
+        return processFile(f)
+          .then(function (dataUrl) {
+            return fetch(PHOTO_API, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ data: dataUrl })
+            });
+          })
+          .then(function (r) { if (!r.ok) throw new Error("upload"); done++; })
+          .catch(function () { fail++; });
+      });
+    });
+    chain.then(function () {
+      pStatus(fail ? (done + " added, " + fail + " failed") : "");
+      loadPhotos();
+      setTimeout(function () { pStatus(""); }, 4000);
+    });
+  }
+
+  // convert HEIC -> JPEG (lazy-load the converter), then downscale to a
+  // reasonably sized JPEG data URL
+  function processFile(file) {
+    var isHeic = /heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+    var step = isHeic
+      ? ensureHeic().then(function (h) { return h({ blob: file, toType: "image/jpeg", quality: 0.9 }); })
+                    .then(function (out) { return Array.isArray(out) ? out[0] : out; })
+      : Promise.resolve(file);
+    return step.then(downscale);
+  }
+
+  function ensureHeic() {
+    if (window.heic2any) return Promise.resolve(window.heic2any);
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
+      s.onload = function () { resolve(window.heic2any); };
+      s.onerror = function () { reject(new Error("heic")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function downscale(blob) {
+    var opt = { imageOrientation: "from-image" };
+    var make = createImageBitmap(blob, opt).catch(function () { return createImageBitmap(blob); });
+    return make.then(function (bmp) {
+      var max = 1400, w = bmp.width, h = bmp.height;
+      var scale = Math.min(1, max / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+      var c = document.createElement("canvas");
+      c.width = cw; c.height = ch;
+      c.getContext("2d").drawImage(bmp, 0, 0, cw, ch);
+      return c.toDataURL("image/jpeg", 0.82);
+    });
   }
 
   function buildStory() {
@@ -452,18 +524,26 @@
   }
 
   storyBtn.addEventListener("click", function () {
-    buildStoryPhotos();
+    loadPhotos();
     buildStory();
     storyEl.hidden = false;
   });
   storyClose.addEventListener("click", function () { storyEl.hidden = true; });
 
-  // photo viewer
+  // photo viewer + delete
   function openPhoto(src) { ciLightImg.src = src; ciLight.hidden = false; }
   function closePhoto() { ciLight.hidden = true; ciLightImg.src = ""; }
   if (storyPhotos) storyPhotos.addEventListener("click", function (e) {
-    var b = e.target.closest(".photo-item");
-    if (b) openPhoto(b.getAttribute("data-photo"));
+    var del = e.target.closest("[data-del]");
+    if (del) {
+      if (window.confirm("Remove this photo?")) {
+        fetch(PHOTO_API + "?id=" + encodeURIComponent(del.getAttribute("data-del")), { method: "DELETE" })
+          .then(function () { loadPhotos(); });
+      }
+      return;
+    }
+    var img = e.target.closest("img[data-photo]");
+    if (img) openPhoto(img.getAttribute("data-photo"));
   });
   if (ciLightClose) ciLightClose.addEventListener("click", closePhoto);
   if (ciLightInner) ciLightInner.addEventListener("click", closePhoto);

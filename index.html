@@ -195,6 +195,11 @@
         <h2>📖</h2>
       </header>
       <div class="story-body">
+        <div class="photo-controls">
+          <button class="photo-add" id="photo-add" type="button">＋ Add photos</button>
+          <input id="photo-file" type="file" accept="image/*,.heic,.heif" multiple hidden />
+          <span class="photo-status" id="photo-status"></span>
+        </div>
         <div class="photo-grid" id="story-photos"></div>
         <ol class="timeline" id="timeline"></ol>
       </div>
