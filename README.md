@@ -61,10 +61,15 @@ folder with any static host.
   **date and time** of the check-in.
 - Each side shows the other's current status, last check-in date/time, and a
   **green dot when they're active right now** (a heartbeat while the overlay is open).
-- **📖 (top center)** opens the story: a **photo gallery** (tap "＋ Add photos"
-  to upload **any file, any name, including iPhone HEIC** — stored in the same
-  Neon database via `api/photos.js`; tap a photo to enlarge, hover to delete)
-  above an emoji timeline grouped into Childhood → Past → Present → Future.
+- A top-left toolbar (once you're in): **📖 Storybook**, **🕘 Check-in History**,
+  **💬 Messages**.
+- **📖 Storybook** — a **photo gallery** (tap "＋ Add photos" to upload **any
+  file, any name, including iPhone HEIC** — stored in the same Neon database via
+  `api/photos.js`; tap a photo to enlarge, tap ✕ then confirm to delete) above
+  an emoji timeline grouped into Childhood → Past → Present → Future.
+- **💬 Messages** — a private WhatsApp-style chat between the two of you
+  (`api/messages.js`, same Neon database). Bubbles are aligned and labeled by
+  which side you entered as (elephant = Tifa Jan, bee = you).
 - **🕘 (top left)** opens the **check-in history** — a running log of every
   past check-in (who, what, date/time).
 - Optional PIN per person in `js/checkin.js` (`PINS` — empty = no PIN).

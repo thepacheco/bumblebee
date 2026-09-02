@@ -110,10 +110,20 @@
   var board     = document.getElementById("board");
   var leaveBtn  = document.getElementById("leave");
 
+  var ciToolbar = document.getElementById("ci-toolbar");
   var storyBtn  = document.getElementById("story-btn");
   var storyEl   = document.getElementById("story");
   var storyClose= document.getElementById("story-close");
   var timeline  = document.getElementById("timeline");
+
+  var msgBtn    = document.getElementById("msg-btn");
+  var messagesEl= document.getElementById("messages");
+  var msgClose  = document.getElementById("msg-close");
+  var msgList   = document.getElementById("msg-list");
+  var msgForm   = document.getElementById("msg-form");
+  var msgText   = document.getElementById("msg-text");
+  var MSG_API   = "/api/messages";
+  var msgTimer  = null;
 
   var histBtn   = document.getElementById("hist-btn");
   var histEl    = document.getElementById("history");
@@ -163,13 +173,13 @@
     if (!composer.hidden) composer.hidden = true;
     if (!storyEl.hidden) storyEl.hidden = true;
     if (!histEl.hidden) histEl.hidden = true;
+    if (messagesEl && !messagesEl.hidden) closeMessages();
   }
 
   function showGate() {
     gate.hidden = false;
     board.hidden = true;
-    storyBtn.hidden = true;
-    histBtn.hidden = true;
+    ciToolbar.hidden = true;
     // reset the picker every time so nothing is pre-chosen
     Array.prototype.forEach.call(whoRow.children, function (b) { b.classList.remove("sel"); });
     whoRow.__sel = null;
@@ -222,8 +232,7 @@
     me = who;
     gate.hidden = true;
     board.hidden = false;
-    storyBtn.hidden = false;
-    histBtn.hidden = false;
+    ciToolbar.hidden = false;
 
     document.querySelectorAll("#checkin-overlay .pane").forEach(function (p) {
       p.classList.toggle("is-me", p.getAttribute("data-side") === me);
@@ -606,6 +615,65 @@
   });
   histClose.addEventListener("click", function () { histEl.hidden = true; });
 
+  /* ---------- messages (WhatsApp-style chat) ---------- */
+  function openMessages() {
+    messagesEl.hidden = false;
+    loadMessages(true);
+    if (msgTimer) clearInterval(msgTimer);
+    msgTimer = setInterval(function () { if (!messagesEl.hidden) loadMessages(false); }, 4000);
+    setTimeout(function () { if (msgText) msgText.focus(); }, 100);
+  }
+  function closeMessages() {
+    messagesEl.hidden = true;
+    if (msgTimer) { clearInterval(msgTimer); msgTimer = null; }
+  }
+
+  function loadMessages(forceScroll) {
+    fetch(MSG_API, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("api"); return r.json(); })
+      .then(function (d) {
+        var msgs = (d && d.messages) || [];
+        var nearBottom = msgList.scrollHeight - msgList.scrollTop - msgList.clientHeight < 60;
+        msgList.innerHTML = msgs.length ? msgs.map(renderMsg).join("") : '<p class="msg-empty">No messages yet — say hi 👋</p>';
+        if (forceScroll || nearBottom) msgList.scrollTop = msgList.scrollHeight;
+      })
+      .catch(function () {
+        msgList.innerHTML = '<p class="msg-empty">Messages need the database connected.</p>';
+      });
+  }
+
+  function renderMsg(m) {
+    var mine = m.side === me;
+    var avatar = m.side === "tifajan" ? "assets/elephant.svg" : "assets/bee.svg";
+    var av = '<img class="msg-av" src="' + avatar + '" alt="" />';
+    return '<div class="msg ' + (mine ? "mine" : "them") + '">' +
+             (mine ? "" : av) +
+             '<div class="bubble"><span class="msg-txt">' + esc(m.text) + "</span>" +
+             '<span class="msg-time">' + stamp(m.at) + "</span></div>" +
+             (mine ? av : "") +
+           "</div>";
+  }
+
+  function sendMessage(text) {
+    text = (text || "").trim();
+    if (!text || !me) return;
+    fetch(MSG_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ side: me, text: text })
+    })
+      .then(function (r) { if (!r.ok) throw new Error("send"); return loadMessages(true); })
+      .catch(function () {});
+  }
+
+  if (msgBtn) msgBtn.addEventListener("click", openMessages);
+  if (msgClose) msgClose.addEventListener("click", closeMessages);
+  if (msgForm) msgForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    sendMessage(msgText.value);
+    msgText.value = "";
+  });
+
   function renderHistory(state) {
     histList.innerHTML = "";
     var log = (state && state.log) || [];
@@ -633,6 +701,7 @@
     else if (!composer.hidden) closeComposer();
     else if (!storyEl.hidden) storyEl.hidden = true;
     else if (!histEl.hidden) histEl.hidden = true;
+    else if (!messagesEl.hidden) closeMessages();
     else closeOverlay();
   });
 

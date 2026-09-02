@@ -157,8 +157,11 @@
     </div>
 
     <button class="leave" id="leave" aria-label="Close" title="Close">✕</button>
-    <button class="story-btn" id="story-btn" aria-label="Our story" hidden>📖</button>
-    <button class="hist-btn" id="hist-btn" aria-label="History" hidden>🕘</button>
+    <div class="ci-toolbar" id="ci-toolbar" hidden>
+      <button class="ci-tool" id="story-btn"><span class="ci-ico">📖</span> Storybook</button>
+      <button class="ci-tool" id="hist-btn"><span class="ci-ico">🕘</span> Check-in History</button>
+      <button class="ci-tool" id="msg-btn"><span class="ci-ico">💬</span> Messages</button>
+    </div>
 
     <main class="split" id="board" hidden>
       <section class="pane pane-tifajan" data-side="tifajan">
@@ -224,6 +227,19 @@
         <h2>Check-in history</h2>
       </header>
       <div class="story-body"><ul class="hist-list" id="hist-list"></ul></div>
+    </div>
+
+    <!-- messages (WhatsApp-style chat between the two of you) -->
+    <div class="msgs" id="messages" hidden role="dialog" aria-modal="true" aria-label="Messages">
+      <header class="story-head">
+        <button class="composer-close" id="msg-close" aria-label="Close">✕</button>
+        <h2>Messages</h2>
+      </header>
+      <div class="msg-list" id="msg-list"></div>
+      <form class="msg-input" id="msg-form">
+        <input id="msg-text" type="text" placeholder="Type a message…" autocomplete="off" maxlength="1000" />
+        <button class="msg-send" type="submit" aria-label="Send">Send</button>
+      </form>
     </div>
 
   </div>
