@@ -2,10 +2,7 @@
   "name": "honey-bee-boba",
   "version": "1.0.0",
   "private": true,
-  "description": "Honey Bee Boba — public boba site with a hidden two-person check-in, backed by Vercel Postgres.",
-  "scripts": {
-    "build": "node scripts/gen-photo-manifest.js"
-  },
+  "description": "Honey Bee Helper — honey home-remedy site with a hidden two-person check-in, backed by Neon Postgres.",
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4"
   }
