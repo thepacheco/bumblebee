@@ -267,3 +267,14 @@ body.checkin-open { overflow: hidden; }
 .ci-lightbox { position: fixed; inset: 0; z-index: 90; background: rgba(10,7,4,.92); display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
 .ci-lightbox-inner { max-width: 100%; max-height: 100%; cursor: zoom-out; display: flex; }
 .ci-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: var(--radius-s); box-shadow: var(--shadow); }
+
+/* ---- photo delete: two-step confirm ---- */
+.photo-confirm {
+  position: absolute; inset: 0; z-index: 2; background: rgba(20,14,9,.88);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .5rem; padding: .4rem; text-align: center; color: var(--cream); font-size: .78rem;
+}
+.pc-actions { display: flex; gap: .4rem; }
+.pc-btn { border: 0; border-radius: 999px; padding: .35rem .7rem; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
+.pc-yes { background: var(--rose); color: #2b1620; }
+.pc-no { background: rgba(255,255,255,.16); color: var(--cream); }

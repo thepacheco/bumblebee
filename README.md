@@ -1,9 +1,13 @@
-# 🐝 Bumblebee — Honey Bee Boba
+# 🐝 Bumblebee — Honey Bee Helper
 
-A public **boba recipes** site (**Honey Bee Boba**) that quietly doubles as a
-private status check-in for two people. To everyone else it's a recipe site. Tap
-the right thing and a hidden check-in **opens right on the homepage** — there's
-no separate page to stumble onto.
+A public **honey home-remedy** site (**Honey Bee Helper**) — ~40 honey-based
+remedies for coughs, colds, sleep, skin, digestion and more, with a category
+filter and safety notes — that quietly doubles as a private status check-in for
+two people. Tap the right thing and a hidden check-in **opens right on the
+homepage**; there's no separate page to stumble onto.
+
+> Content is general-wellness / traditional home-remedy info, **not medical
+> advice**, with a disclaimer and per-remedy cautions. No honey under age 1.
 
 ## What's here
 

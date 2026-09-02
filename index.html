@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Honey Bee Boba — Boba Recipes You Can Make at Home</title>
-  <meta name="description" content="Real bubble tea recipes — classic milk tea, brown sugar boba, matcha, taro, Thai tea and more, with step-by-step instructions." />
+  <title>Honey Bee Helper — Honey Home Remedies</title>
+  <meta name="description" content="Honey-based home remedies for coughs, colds, sore throats, sleep, skin, digestion and more — simple recipes with step-by-step instructions." />
   <link rel="icon" href="assets/bee.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,54 +18,61 @@
   <header class="site-header">
     <div class="container nav">
       <div class="brand">
-        <button class="logo-btn" data-bee="home" aria-label="Honey Bee Boba — home">
+        <button class="logo-btn" data-bee="home" aria-label="Honey Bee Helper — home">
           <img class="logo" src="assets/bee.svg" alt="" />
         </button>
-        <span class="brand-name">Honey <span>Bee</span> Boba</span>
+        <span class="brand-name">Honey <span>Bee</span> Helper</span>
       </div>
       <button class="nav-toggle" aria-label="Menu" aria-expanded="false">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <ul class="nav-links">
-        <li><a href="#recipes">Recipes</a></li>
-        <li><a href="#basics">Basics</a></li>
+        <li><a href="#recipes">Remedies</a></li>
+        <li><a href="#safety">Safety</a></li>
         <li><a href="#gallery">Gallery</a></li>
       </ul>
-      <a href="#recipes" class="btn btn-primary nav-cta">Browse recipes</a>
+      <a href="#recipes" class="btn btn-primary nav-cta">Browse remedies</a>
     </div>
   </header>
 
   <!-- ===================== HERO ===================== -->
   <section class="hero recipes-hero">
-    <div class="hero-photo" style="background-image:url('https://loremflickr.com/1400/900/bubble,tea?lock=7')"></div>
+    <div class="hero-photo" style="background-image:url('https://loremflickr.com/1400/900/honey,jar?lock=7')"></div>
     <div class="container hero-content">
-      <p class="eyebrow">Homemade boba</p>
-      <h1>Boba recipes you can actually make at home.</h1>
-      <p>Real bubble tea — chewy tapioca, brown sugar, matcha, taro and more — with simple steps and the little tricks that make it taste like the shop.</p>
+      <p class="eyebrow">Honey home remedies</p>
+      <h1>Feel better, naturally — with a little honey.</h1>
+      <p>Simple, honey-based remedies for coughs, colds, sore throats, sleep, skin, and more — the soothing recipes people have leaned on for generations.</p>
       <div class="hero-actions">
-        <a href="#recipes" class="btn btn-primary">Browse recipes</a>
-        <a href="#basics" class="btn btn-ghost">Boba basics</a>
+        <a href="#recipes" class="btn btn-primary">Browse remedies</a>
+        <a href="#safety" class="btn btn-ghost">Read this first</a>
       </div>
     </div>
   </section>
 
-  <!-- ===================== RECIPES ===================== -->
+  <!-- ===================== REMEDIES ===================== -->
   <section class="section recipes" id="recipes">
     <div class="container">
-      <p class="eyebrow">The recipes</p>
-      <h2>Pick your drink</h2>
-      <p class="section-lead">Tap any recipe for the full ingredients and steps — and tap its photo to see it bigger.</p>
+      <p class="eyebrow">The remedies</p>
+      <h2>What are you fighting today?</h2>
+      <p class="section-lead">Tap any remedy for the full ingredients and steps — and tap its photo to see it bigger.</p>
+      <div class="disclaimer-note">⚠️ General wellness &amp; traditional home-remedy info — <strong>not medical advice</strong>. See a doctor for severe or lasting symptoms. <strong>Never give honey to a child under 1 year old.</strong></div>
+      <div class="recipe-filters" id="recipe-filters"></div>
       <div class="recipe-grid" id="recipe-grid"></div>
     </div>
   </section>
 
-  <!-- ===================== BASICS ===================== -->
-  <section class="section basics" id="basics">
+  <!-- ===================== SAFETY ===================== -->
+  <section class="section basics" id="safety">
     <div class="container">
-      <p class="eyebrow">Start here</p>
-      <h2>Boba basics</h2>
-      <p class="section-lead">Master these two and every recipe above gets easy.</p>
-      <div class="recipe-grid" id="basics-grid"></div>
+      <p class="eyebrow">Read this first</p>
+      <h2>Using honey safely</h2>
+      <ul class="safety-list">
+        <li><strong>No honey under age 1.</strong> Honey can cause infant botulism — never give it to babies younger than 12 months.</li>
+        <li><strong>Not a replacement for medical care.</strong> These are traditional comfort remedies. See a doctor for high fever, trouble breathing, severe pain, or symptoms that last or get worse.</li>
+        <li><strong>Don't boil honey.</strong> Add it to warm (not boiling) liquids to keep its beneficial enzymes.</li>
+        <li><strong>Allergies &amp; conditions.</strong> Skip anything you're allergic to, patch-test skin remedies, and check with your doctor if you're pregnant, diabetic, or on medication.</li>
+        <li><strong>Wounds &amp; burns.</strong> Only use honey on minor cuts/burns; seek care for deep, large, or infected wounds.</li>
+      </ul>
     </div>
   </section>
 
@@ -73,7 +80,7 @@
   <section class="section gallery" id="gallery">
     <div class="container">
       <p class="eyebrow">Gallery</p>
-      <h2>Boba, up close</h2>
+      <h2>A little golden goodness</h2>
       <p class="section-lead">Tap any photo to open it full-size.</p>
       <div class="gallery-grid" id="gallery-grid"></div>
     </div>
@@ -85,23 +92,23 @@
       <div class="footer-top">
         <div class="footer-brand">
           <!-- Footer bee: TRIPLE-click within 2s opens the hidden check-in overlay -->
-          <button class="logo-btn" data-bee="secret" aria-label="Honey Bee Boba">
+          <button class="logo-btn" data-bee="secret" aria-label="Honey Bee Helper">
             <img class="logo" src="assets/bee.svg" alt="" />
           </button>
           <div>
-            <div class="brand-name">Honey <span>Bee</span> Boba</div>
-            <p class="footer-tag">Homemade bubble tea recipes, one chewy pearl at a time.</p>
+            <div class="brand-name">Honey <span>Bee</span> Helper</div>
+            <p class="footer-tag">Honey home remedies for whatever's got you down.</p>
           </div>
         </div>
         <ul class="footer-nav">
-          <li><a href="#recipes">Recipes</a></li>
-          <li><a href="#basics">Basics</a></li>
+          <li><a href="#recipes">Remedies</a></li>
+          <li><a href="#safety">Safety</a></li>
           <li><a href="#gallery">Gallery</a></li>
         </ul>
       </div>
       <div class="footer-bottom">
-        <span>© <span id="year"></span> Honey Bee Boba. All rights reserved.</span>
-        <span>Made with 🍯 &amp; a little buzz.</span>
+        <span>© <span id="year"></span> Honey Bee Helper. Not medical advice.</span>
+        <span>Made with 🍯 &amp; care.</span>
       </div>
     </div>
   </footer>

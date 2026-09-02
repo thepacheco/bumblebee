@@ -457,7 +457,12 @@
         return;
       }
       storyPhotos.innerHTML = all.map(function (x) {
-        var del = x.id ? '<button class="photo-del" data-del="' + x.id + '" aria-label="Delete photo">✕</button>' : "";
+        var del = x.id
+          ? '<button class="photo-del" data-del-ask="' + x.id + '" aria-label="Delete photo">✕</button>' +
+            '<div class="photo-confirm" hidden><span>Delete this photo?</span>' +
+            '<span class="pc-actions"><button class="pc-btn pc-yes" data-del-yes="' + x.id + '">Delete</button>' +
+            '<button class="pc-btn pc-no" data-del-no="1">Keep</button></span></div>'
+          : "";
         return '<div class="photo-item"><img loading="lazy" src="' + x.url + '" data-photo="' + x.url + '" alt="Our photo" />' + del + "</div>";
       }).join("");
     });
@@ -565,12 +570,27 @@
   function openPhoto(src) { ciLightImg.src = src; ciLight.hidden = false; }
   function closePhoto() { ciLight.hidden = true; ciLightImg.src = ""; }
   if (storyPhotos) storyPhotos.addEventListener("click", function (e) {
-    var del = e.target.closest("[data-del]");
-    if (del) {
-      if (window.confirm("Remove this photo?")) {
-        fetch(PHOTO_API + "?id=" + encodeURIComponent(del.getAttribute("data-del")), { method: "DELETE" })
-          .then(function () { loadPhotos(); });
-      }
+    // step 1: tap ✕ -> reveal the confirm strip on that tile
+    var ask = e.target.closest("[data-del-ask]");
+    if (ask) {
+      var pc = ask.parentNode.querySelector(".photo-confirm");
+      if (pc) pc.hidden = false;
+      return;
+    }
+    // step 2a: "Keep" -> hide the confirm strip
+    var no = e.target.closest("[data-del-no]");
+    if (no) {
+      var pc2 = no.closest(".photo-confirm");
+      if (pc2) pc2.hidden = true;
+      return;
+    }
+    // step 2b: "Delete" -> actually delete (this is the secondary confirmation)
+    var yes = e.target.closest("[data-del-yes]");
+    if (yes) {
+      var id = yes.getAttribute("data-del-yes");
+      yes.textContent = "Deleting…";
+      fetch(PHOTO_API + "?id=" + encodeURIComponent(id), { method: "DELETE" })
+        .then(function () { loadPhotos(); });
       return;
     }
     var img = e.target.closest("img[data-photo]");

@@ -318,3 +318,36 @@ body.modal-open { overflow: hidden; }
 .lightbox { position: fixed; inset: 0; z-index: 160; background: rgba(20,14,9,.9); display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
 .lightbox-inner { max-width: 100%; max-height: 100%; cursor: zoom-out; display: flex; }
 .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: var(--radius-s); box-shadow: var(--shadow); }
+
+/* ==========================================================================
+   Remedies extras
+   ========================================================================== */
+.disclaimer-note {
+  background: #fff6e2; border: 1px solid var(--honey); color: #6b4a1f;
+  border-radius: var(--radius-s); padding: .8rem 1rem; font-size: .9rem; margin: 0 0 1.4rem;
+}
+.disclaimer-note strong { color: #7a3b1f; }
+
+.recipe-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+.filter-chip {
+  border: 1.5px solid rgba(92,64,51,.2); background: var(--cream); color: var(--brown);
+  border-radius: 999px; padding: .45rem .95rem; font-size: .85rem; font-weight: 600;
+  cursor: pointer; font-family: var(--font-body); transition: background .15s, border-color .15s, color .15s;
+}
+.filter-chip:hover { border-color: var(--honey); }
+.filter-chip.on { background: var(--espresso); color: var(--cream); border-color: var(--espresso); }
+
+.cat-badge {
+  display: inline-block; background: rgba(232,163,61,.18); color: var(--honey-deep);
+  font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  padding: .2rem .55rem; border-radius: 999px; margin-bottom: .5rem;
+}
+
+.caution {
+  background: #fdecec; border: 1px solid #e6a4a4; color: #8a2b2b;
+  border-radius: var(--radius-s); padding: .7rem .9rem; font-size: .88rem; margin: 0 0 1.2rem;
+}
+.modal-disclaimer { margin-top: 1.4rem; font-size: .8rem; color: var(--brown-soft); border-top: 1px solid rgba(92,64,51,.12); padding-top: 1rem; }
+
+.safety-list { max-width: 780px; margin: 1rem 0 0; padding-left: 1.2rem; }
+.safety-list li { margin-bottom: .8rem; line-height: 1.55; }
