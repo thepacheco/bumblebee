@@ -57,33 +57,27 @@
     });
   }
 
-  /* ---------- bee routing ---------- */
+  /* ---------- secret trigger (all up top, no scrolling) ----------
+     Tap the 🍯 in the hero to "arm", then tap the bee logo to open the
+     private check-in overlay. A casual tap on the bee just goes home. */
   var HOME = "index.html";
-  var TRIPLE_WINDOW = 2000; // ms
+  var ARM_WINDOW = 8000; // ms you have after tapping the honey
+  var armedAt = 0;
 
-  document.querySelectorAll('[data-bee]').forEach(function (bee) {
-    var mode = bee.getAttribute("data-bee");
+  var honey = document.getElementById("honey-key");
+  if (honey) honey.addEventListener("click", function (e) {
+    e.preventDefault();
+    armedAt = Date.now();
+  });
 
-    if (mode === "home") {
-      bee.addEventListener("click", function () { window.location.href = HOME; });
-      return;
-    }
-
-    if (mode === "secret") {
-      // Triple-click the footer bee to open the check-in OVERLAY.
-      // Nothing navigates — we stay on the homepage, so there's no
-      // separate page anyone could stumble onto by URL.
-      var count = 0;
-      var firstAt = 0;
-      bee.addEventListener("click", function () {
-        var now = Date.now();
-        if (now - firstAt > TRIPLE_WINDOW) { count = 0; firstAt = now; }
-        count++;
-        if (count >= 3) {
-          count = 0;
-          if (typeof window.openCheckin === "function") window.openCheckin();
-        }
-      });
-    }
+  document.querySelectorAll('[data-bee="home"]').forEach(function (bee) {
+    bee.addEventListener("click", function () {
+      if (Date.now() - armedAt < ARM_WINDOW && typeof window.openCheckin === "function") {
+        armedAt = 0;
+        window.openCheckin();
+      } else {
+        window.location.href = HOME;
+      }
+    });
   });
 })();

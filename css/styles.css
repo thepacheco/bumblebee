@@ -351,3 +351,18 @@ body.modal-open { overflow: hidden; }
 
 .safety-list { max-width: 780px; margin: 1rem 0 0; padding-left: 1.2rem; }
 .safety-list li { margin-bottom: .8rem; line-height: 1.55; }
+
+/* the hidden honey key in the hero headline — looks like a normal emoji */
+.honey-key {
+  background: none; border: 0; padding: 0; margin: 0; font: inherit; line-height: 1;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; vertical-align: baseline;
+}
+.honey-key:focus { outline: none; }
+
+/* a touch more breathing room on small screens */
+@media (max-width: 560px) {
+  .section { padding: 2.6rem 0; }
+  .recipe-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+  .recipe-info { padding: .9rem 1rem 1.1rem; }
+  .recipe-info h3 { font-size: 1.05rem; }
+}

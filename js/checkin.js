@@ -90,7 +90,8 @@
     { era: "Present", items: [
       { emoji: "🍽️", label: "Dinner" },
       { emoji: "🚗", label: "Car" },
-      { emoji: "⚖️", label: "" }
+      { emoji: "⚖️", label: "" },
+      { emoji: "🤝", label: "Holding hands" }
     ]},
     { era: "Future", items: [
       { emoji: "👵👴", label: "The bench" }
@@ -646,7 +647,7 @@
     var mine = m.side === me;
     var avatar = m.side === "tifajan" ? "assets/elephant.svg" : "assets/bee.svg";
     var av = '<img class="msg-av" src="' + avatar + '" alt="" />';
-    return '<div class="msg ' + (mine ? "mine" : "them") + '">' +
+    return '<div class="msg ' + (mine ? "mine" : "them") + '" data-side="' + m.side + '">' +
              (mine ? "" : av) +
              '<div class="bubble"><span class="msg-txt">' + esc(m.text) + "</span>" +
              '<span class="msg-time">' + stamp(m.at) + "</span></div>" +

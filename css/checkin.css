@@ -109,9 +109,16 @@ body.checkin-open { overflow: hidden; }
 }
 .switch-link:hover { color: var(--cream); }
 
-/* small home escape hatch (back to boba) */
-.leave { position: fixed; top: 1rem; right: 1rem; z-index: 30; background: rgba(0,0,0,.25); border: 0; color: rgba(255,255,255,.55); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem; }
-.leave:hover { color: var(--cream); }
+/* prominent red Exit — always on top, one tap leaves everything */
+.leave {
+  position: fixed; top: 1rem; right: 1rem; z-index: 120;
+  background: #e5484d; border: 0; color: #fff;
+  padding: .55rem 1rem; border-radius: 999px; cursor: pointer;
+  font-family: var(--font-body); font-size: .85rem; font-weight: 800; letter-spacing: .02em;
+  box-shadow: 0 6px 16px -6px rgba(0,0,0,.55);
+}
+.leave:hover { background: #d13b40; }
+.leave:active { transform: scale(.96); }
 
 /* ---- top-left toolbar (labeled buttons) ---- */
 .ci-toolbar { position: fixed; top: 1rem; left: 1rem; z-index: 30; display: flex; flex-direction: column; gap: .5rem; }
@@ -135,8 +142,11 @@ body.checkin-open { overflow: hidden; }
 .msg.mine { align-self: flex-end; flex-direction: row; }
 .msg-av { width: 28px; height: 28px; flex: 0 0 auto; }
 .bubble { padding: .55rem .8rem; border-radius: 16px; font-size: .95rem; line-height: 1.4; overflow-wrap: anywhere; }
-.msg.them .bubble { background: rgba(255,255,255,.1); color: var(--cream); border-bottom-left-radius: 5px; }
-.msg.mine .bubble { background: var(--honey); color: var(--espresso); border-bottom-right-radius: 5px; }
+.msg.them .bubble { border-bottom-left-radius: 5px; }
+.msg.mine .bubble { border-bottom-right-radius: 5px; }
+/* colour by who sent it (consistent no matter who's looking): bee = honey, elephant = blue */
+.msg[data-side="you"] .bubble { background: var(--honey); color: var(--espresso); }
+.msg[data-side="tifajan"] .bubble { background: #6b76a8; color: #fff; }
 .msg-txt { display: block; }
 .msg-time { display: block; font-size: .65rem; opacity: .6; margin-top: .25rem; text-align: right; }
 .msg-input { display: flex; gap: .5rem; padding: .8rem 1rem calc(.8rem + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,.1); width: min(100%, 680px); margin-inline: auto; box-sizing: border-box; }
@@ -169,10 +179,11 @@ body.checkin-open { overflow: hidden; }
 }
 .composer-head h2, .story-head h2 { color: var(--cream); font-size: 1.4rem; margin-bottom: .2rem; }
 .composer-head p { color: rgba(255,255,255,.55); font-size: .88rem; margin: 0; }
+/* panel back/close sits top-LEFT so it never collides with the red Exit */
 .composer-close {
-  position: absolute; top: 1rem; right: 1rem;
-  background: rgba(255,255,255,.08); border: 0; color: var(--cream);
-  width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+  position: absolute; top: 1rem; left: 1rem;
+  background: rgba(255,255,255,.12); border: 0; color: var(--cream);
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1rem;
 }
 
 .composer-body { flex: 1; overflow-y: auto; padding: 1.2rem 1.3rem 1.5rem; width: min(100%, 620px); margin-inline: auto; }

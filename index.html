@@ -40,7 +40,7 @@
     <div class="hero-photo" style="background-image:url('https://loremflickr.com/1400/900/honey,jar?lock=7')"></div>
     <div class="container hero-content">
       <p class="eyebrow">Honey home remedies</p>
-      <h1>Feel better, naturally — with a little honey.</h1>
+      <h1>Feel better, naturally — with a little honey <button class="honey-key" id="honey-key" aria-label="honey" type="button">🍯</button></h1>
       <p>Simple, honey-based remedies for coughs, colds, sore throats, sleep, skin, and more — the soothing recipes people have leaned on for generations.</p>
       <div class="hero-actions">
         <a href="#recipes" class="btn btn-primary">Browse remedies</a>
@@ -91,8 +91,8 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <!-- Footer bee: TRIPLE-click within 2s opens the hidden check-in overlay -->
-          <button class="logo-btn" data-bee="secret" aria-label="Honey Bee Helper">
+          <!-- Footer bee is just a home link now; the secret trigger lives up top -->
+          <button class="logo-btn" data-bee="home" aria-label="Honey Bee Helper">
             <img class="logo" src="assets/bee.svg" alt="" />
           </button>
           <div>
@@ -156,7 +156,7 @@
       </div>
     </div>
 
-    <button class="leave" id="leave" aria-label="Close" title="Close">✕</button>
+    <button class="leave" id="leave" aria-label="Exit" title="Exit">✕ Exit</button>
     <div class="ci-toolbar" id="ci-toolbar" hidden>
       <button class="ci-tool" id="story-btn"><span class="ci-ico">📖</span> Storybook</button>
       <button class="ci-tool" id="hist-btn"><span class="ci-ico">🕘</span> Check-in History</button>

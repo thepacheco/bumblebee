@@ -38,12 +38,12 @@ pulled live by keyword from LoremFlickr — set any recipe's `img`/`keys` in
 No build step, no dependencies. Open `index.html` in a browser, or serve the
 folder with any static host.
 
-## The secret trigger
+## The secret trigger (all up top — mobile friendly)
 
-- **Bee in the header** → single click, always goes home. Normal logo.
-- **Bee in the footer** → click it **3× within 2 seconds** to open the check-in
-  **overlay on the homepage**. One or two clicks do nothing. Because it's an
-  overlay (not its own URL), there's no page anyone can reach by guessing a link.
+Tap the **🍯 in the hero headline**, then tap the **bee logo in the header**
+within a few seconds → the private check-in overlay opens. A casual tap on the
+bee just goes home, and there's no separate URL to stumble onto. (Everything is
+at the top of the page, so there's no scrolling past the remedies.)
 
 ## The check-in
 
