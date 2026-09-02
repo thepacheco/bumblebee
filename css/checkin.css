@@ -63,12 +63,27 @@ body.checkin-open { overflow: hidden; }
 .dot.online { background: #5ad07a; box-shadow: 0 0 0 4px rgba(90,208,122,.2); }
 
 .status-bubble {
-  margin-top: 1rem; max-width: min(92vw, 42ch);
+  margin-top: 1rem; max-width: min(92vw, 44ch);
   max-height: 42vh; overflow-y: auto;
-  display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
+  display: flex; flex-direction: column; gap: .55rem; align-items: stretch;
   font-size: 1.05rem; min-height: 1.2em; line-height: 1.4;
 }
 .status-bubble:empty::before { content: "—"; }
+
+/* grouped update layout (also used in history) */
+.stat-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .5rem; }
+.status-bubble .stat-group { justify-content: center; }
+.grp-label {
+  font-size: .66rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 700;
+  color: rgba(255,255,255,.5); flex: 0 0 auto; padding-top: .15rem;
+}
+.grp-chips { display: inline-flex; flex-wrap: wrap; gap: .35rem; }
+.note-line {
+  font-style: italic; color: var(--cream); background: rgba(232,163,61,.16);
+  padding: .45rem .75rem; border-radius: 12px; display: flex; gap: .35rem;
+  overflow-wrap: anywhere;
+}
+.note-line .emoji { font-style: normal; }
 .chip-mini {
   display: inline-flex; align-items: center; gap: .35rem;
   background: rgba(255,255,255,.09); border-radius: 14px; padding: .4rem .8rem;
@@ -121,7 +136,8 @@ body.checkin-open { overflow: hidden; }
 .hist-item { display: flex; align-items: center; gap: .8rem; padding: .8rem 0; border-bottom: 1px solid rgba(255,255,255,.08); }
 .hist-av { width: 34px; height: 34px; flex: 0 0 auto; }
 .hist-main { flex: 1; }
-.hist-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.hist-chips { display: flex; flex-direction: column; gap: .4rem; }
+.hist-chips .stat-group { justify-content: flex-start; }
 .hist-time { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .3rem; }
 .hist-empty { color: rgba(255,255,255,.5); text-align: center; padding: 2rem 0; list-style: none; }
 

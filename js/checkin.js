@@ -15,10 +15,14 @@
     { title: "What am I doing?", items: [
       { emoji: "💻", text: "Working" },
       { emoji: "😴", text: "Resting" },
+      { emoji: "🛌", text: "Laying down" },
+      { emoji: "🍵", text: "Drinking tea" },
       { emoji: "🚶", text: "Out & about" },
       { emoji: "🚗", text: "Driving" },
       { emoji: "🛒", text: "Running errands" },
       { emoji: "🏫", text: "Dropping off to school" },
+      { emoji: "🌳", text: "At the park" },
+      { emoji: "🪑", text: "Sitting outside" },
       { emoji: "🤪", text: "Being stupid" }
     ]},
     { title: "What am I feeling?", items: [
@@ -129,6 +133,21 @@
   var selectedKeys = {};
   var hearts = 0;
   var noteText = "";
+
+  // friendly short label per section (defined up here so the first render,
+  // fired synchronously by Store.subscribe below, can use it)
+  var CAT_LABEL = {
+    "What am I doing?": "Doing",
+    "What am I feeling?": "Feeling",
+    "Plans for today?": "Plans",
+    "What am I missing most?": "Missing",
+    "What do you want to do to me?": "For you",
+    "A little note": "Note"
+  };
+  function shortCat(c) { return CAT_LABEL[c] || c || ""; }
+  function chipMini(it) {
+    return '<span class="chip-mini"><span class="emoji">' + esc(it.emoji) + "</span>" + esc(it.text) + "</span>";
+  }
 
   /* ---------- open / close the overlay ---------- */
   window.openCheckin = function () {
@@ -272,18 +291,27 @@
     };
   }
 
-  // one renderer for both the board and the history (shows everything)
+  // one renderer for both the board and the history — groups items by category
+  // so it's clear what the other person is saying.
   function statusHtml(s) {
-    var chips = (s.items || []).map(function (it) {
-      return '<span class="chip-mini"><span class="emoji">' + esc(it.emoji) + "</span>" + esc(it.text) + "</span>";
+    var groups = {}, order = [];
+    (s.items || []).forEach(function (it) {
+      var cat = it.cat || "";
+      if (!(cat in groups)) { groups[cat] = []; order.push(cat); }
+      groups[cat].push(it);
+    });
+    var html = order.map(function (cat) {
+      var chips = groups[cat].map(chipMini).join("");
+      var label = cat ? '<span class="grp-label">' + esc(shortCat(cat)) + "</span>" : "";
+      return '<div class="stat-group">' + label + '<span class="grp-chips">' + chips + "</span></div>";
     });
     if (s.hearts > 0) {
-      chips.push('<span class="chip-mini heart"><span class="emoji">❤️</span>×' + s.hearts + " I love you</span>");
+      html.push('<div class="stat-group"><span class="grp-label">Love</span><span class="grp-chips"><span class="chip-mini heart"><span class="emoji">❤️</span>×' + s.hearts + " I love you</span></span></div>");
     }
     if (s.note) {
-      chips.push('<span class="chip-mini note"><span class="emoji">💬</span>' + esc(s.note) + "</span>");
+      html.push('<div class="stat-group note-line"><span class="emoji">💬</span>' + esc(s.note) + "</div>");
     }
-    return chips.join("");
+    return html.join("");
   }
 
   /* ---------- composer ---------- */
@@ -310,13 +338,14 @@
       var grid = document.createElement("div");
       grid.className = "chip-grid";
       sec.items.forEach(function (it) {
+        var item = { emoji: it.emoji, text: it.text, cat: sec.title };
         var chip = document.createElement("button");
         chip.className = "chip";
         chip.innerHTML = '<span class="emoji">' + esc(it.emoji) + "</span><span>" + esc(it.text) + "</span>";
         chip.addEventListener("click", function () {
-          var k = keyOf(it);
+          var k = keyOf(item);
           if (selectedKeys[k]) { delete selectedKeys[k]; chip.classList.remove("on"); }
-          else { selectedKeys[k] = it; chip.classList.add("on"); }
+          else { selectedKeys[k] = item; chip.classList.add("on"); }
           updatePreview();
         });
         grid.appendChild(chip);
@@ -410,26 +439,28 @@
   var PHOTO_API = "/api/photos";
   function pStatus(t) { if (photoStatus) photoStatus.textContent = t || ""; }
 
-  // load the gallery from the database
+  // Gallery = committed files in assets/photos/ (listed in photos-manifest.json,
+  // built automatically) + photos uploaded through the app (stored in the DB).
   function loadPhotos() {
     if (!storyPhotos) return;
-    fetch(PHOTO_API, { cache: "no-store" })
-      .then(function (r) { if (!r.ok) throw new Error("api"); return r.json(); })
-      .then(function (d) {
-        var ph = (d && d.photos) || [];
-        if (!ph.length) {
-          storyPhotos.innerHTML = '<p class="photo-empty">No photos yet — tap “＋ Add photos”. Any file works, including iPhone HEIC.</p>';
-          return;
-        }
-        storyPhotos.innerHTML = ph.map(function (p) {
-          var url = PHOTO_API + "?id=" + encodeURIComponent(p.id);
-          return '<div class="photo-item"><img loading="lazy" src="' + url + '" data-photo="' + url + '" alt="Our photo" />' +
-                 '<button class="photo-del" data-del="' + p.id + '" aria-label="Delete photo">✕</button></div>';
-        }).join("");
-      })
-      .catch(function () {
-        storyPhotos.innerHTML = '<p class="photo-empty">Photos need the database connected (Storage → Postgres).</p>';
+    Promise.all([
+      fetch("assets/photos-manifest.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+      fetch(PHOTO_API, { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : { photos: [] }; }).catch(function () { return { photos: [] }; })
+    ]).then(function (res) {
+      var files = (res[0] || []).map(function (u) { return { url: u }; });
+      var db = ((res[1] && res[1].photos) || []).map(function (p) {
+        return { url: PHOTO_API + "?id=" + encodeURIComponent(p.id), id: p.id };
       });
+      var all = db.concat(files); // newest uploads first, then committed files
+      if (!all.length) {
+        storyPhotos.innerHTML = '<p class="photo-empty">No photos yet — tap “＋ Add photos”. Any file works, including iPhone HEIC.</p>';
+        return;
+      }
+      storyPhotos.innerHTML = all.map(function (x) {
+        var del = x.id ? '<button class="photo-del" data-del="' + x.id + '" aria-label="Delete photo">✕</button>' : "";
+        return '<div class="photo-item"><img loading="lazy" src="' + x.url + '" data-photo="' + x.url + '" alt="Our photo" />' + del + "</div>";
+      }).join("");
+    });
   }
 
   /* ---- upload (any file, incl. HEIC) ---- */
