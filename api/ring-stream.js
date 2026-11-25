@@ -44,15 +44,23 @@ export default async function handler(req, res) {
   if (!['GET', 'POST', 'DELETE'].includes(req.method)) return res.status(405).end();
   if (req.method !== 'GET' && !['https://www.beejan.co', 'https://beejan.co'].includes(req.headers.origin)) return res.status(403).end();
 
-  const cookie = req.cookies?.[SESSION_COOKIE];
-  if (typeof cookie !== 'string' || !/^[\w-]{43}$/.test(cookie)) return res.status(401).end();
+  const rawCookie = req.headers.cookie?.split(';').map(part => part.trim())
+    .find(part => part.startsWith(SESSION_COOKIE + '='))?.slice(SESSION_COOKIE.length + 1);
+  const cookie = req.cookies?.[SESSION_COOKIE] ?? rawCookie;
+  if (typeof cookie !== 'string' || !/^[\w-]{43}$/.test(cookie)) {
+    console.info('Ring stream: browser authorization cookie missing');
+    return res.status(401).end();
+  }
 
   try {
     const sql = database();
     const [link] = await sql`SELECT l.* FROM ring_kitchen_links l
       JOIN ring_kitchen_viewers v ON v.account_id = l.account_id
       WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()`;
-    if (!link) return res.status(401).end();
+    if (!link) {
+      console.info('Ring stream: browser authorization expired or revoked');
+      return res.status(401).end();
+    }
 
     await sql`CREATE TABLE IF NOT EXISTS ring_kitchen_view_log (
       account_id text NOT NULL REFERENCES ring_kitchen_links(account_id) ON DELETE CASCADE,
