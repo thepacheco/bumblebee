@@ -14,6 +14,9 @@
   const pairButton = document.getElementById('kitchen-pair');
   const pairStatus = document.getElementById('kitchen-pair-status');
   const pairLink = document.getElementById('kitchen-pair-link');
+  const recoveryForm = document.getElementById('kitchen-recovery');
+  const recoveryInput = document.getElementById('kitchen-recovery-key');
+  const recoveryStatus = document.getElementById('kitchen-recovery-status');
   const pairEndpoint = '/api/ring-pair';
   const endpoint = '/api/ring-stream';
   const cameraSite = 'https://www.beejan.co';
@@ -49,6 +52,9 @@
     pairLink.hidden = true;
     pairLink.value = '';
     pairStatus.hidden = true;
+    recoveryForm.hidden = true;
+    recoveryForm.reset();
+    recoveryStatus.textContent = '';
     audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
     start.hidden = !retry;
     start.disabled = false;
@@ -170,11 +176,12 @@
         headers: { 'Content-Type': 'application/sdp' },
         body: peer.localDescription.sdp
       });
-      if (!response.ok) {
-        throw new Error(response.status === 401 || response.status === 403
-          ? 'Authorize this browser through Beejan Kitchen Viewer in the Ring Appstore.'
-          : 'Kitchen live view is unavailable.');
+      if (response.status === 401) {
+        stop('This browser needs one-time access to Kitchen.');
+        recoveryForm.hidden = false;
+        return;
       }
+      if (!response.ok) throw new Error('Kitchen live view is unavailable.');
       const { answer, session } = await response.json();
       connection.session = session;
       if (active !== connection) {
@@ -252,7 +259,8 @@
     try {
       const response = await fetch(pairEndpoint, { method: 'POST', credentials: 'same-origin' });
       if (response.status === 401) {
-        pairStatus.textContent = 'Link Kitchen in Ring from this browser before adding another device.';
+        pairStatus.textContent = 'Restore access on this browser before pairing another device.';
+        recoveryForm.hidden = false;
         return;
       }
       if (!response.ok) throw new Error('Pairing unavailable');
@@ -265,6 +273,33 @@
       pairStatus.textContent = 'Could not create a pairing link. Try again.';
     } finally {
       pairButton.disabled = false;
+    }
+  });
+
+  recoveryForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = recoveryForm.querySelector('button');
+    const recovery = recoveryInput.value;
+    recoveryInput.value = '';
+    submit.disabled = true;
+    recoveryStatus.textContent = 'Checking access…';
+    try {
+      const response = await fetch(pairEndpoint, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recovery })
+      });
+      if (response.status === 409) throw new Error('Kitchen needs to be connected in the Ring Appstore first.');
+      if (response.status === 403) throw new Error('That recovery key did not match.');
+      if (!response.ok) throw new Error('Browser recovery is unavailable. Check that the recovery key is set in Vercel.');
+      if (!dialog.open) return;
+      recoveryForm.hidden = true;
+      recoveryStatus.textContent = '';
+      connect();
+      watchCameraStatus();
+    } catch (error) {
+      recoveryStatus.textContent = error.message;
+    } finally {
+      submit.disabled = false;
     }
   });
 
