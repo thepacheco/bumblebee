@@ -13,7 +13,9 @@ export default async function handler(req, res) {
   const recovery = req.body?.recovery;
   if (recovery !== undefined) {
     const expected = process.env.RING_BROWSER_RECOVERY_KEY;
-    if (typeof expected !== 'string' || expected.length < 32) return res.status(503).end();
+    const configured = typeof expected === 'string' && expected.length <= 128 &&
+      (expected.length >= 32 || expected.trim().split(/\s+/).length >= 6);
+    if (!configured) return res.status(503).end();
     if (typeof recovery !== 'string' || recovery.length > 128 ||
         !timingSafeEqual(Buffer.from(tokenDigest(recovery), 'hex'), Buffer.from(tokenDigest(expected), 'hex'))) {
       return res.status(403).end();
