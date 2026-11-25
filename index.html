@@ -233,7 +233,7 @@
     <dialog id="kitchen-camera" class="camera-panel" aria-labelledby="kitchen-title">
       <header class="camera-header">
         <div><h2 id="kitchen-title">Kitchen</h2><p>Ring camera · Live view</p></div>
-        <button type="button" class="camera-control camera-close" id="kitchen-close" aria-label="Close camera" title="Close camera">✕</button>
+        <div class="camera-header-actions"><div id="kitchen-health" class="camera-health" aria-live="polite" hidden><strong id="kitchen-health-state"></strong><small id="kitchen-last-offline"></small></div><button type="button" class="camera-control camera-close" id="kitchen-close" aria-label="Close camera" title="Close camera">✕</button></div>
       </header>
       <div class="camera-stage">
         <video id="kitchen-video" playsinline muted aria-label="Live video from the Kitchen camera"></video>
