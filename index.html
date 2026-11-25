@@ -161,7 +161,7 @@
       <button class="ci-tool" id="story-btn"><span class="ci-ico">📖</span> Storybook</button>
       <button class="ci-tool" id="hist-btn"><span class="ci-ico">🕘</span> Check-in History</button>
       <button class="ci-tool" id="msg-btn"><span class="ci-ico">💬</span> Messages</button>
-      <button type="button" class="ci-tool" id="kitchen-btn">Camera</button>
+      <button type="button" class="ci-tool" id="kitchen-btn"><span class="ci-ico" aria-hidden="true">📷</span> Camera</button>
     </div>
 
     <main class="split" id="board" hidden>
@@ -230,23 +230,30 @@
       <div class="story-body"><ul class="hist-list" id="hist-list"></ul></div>
     </div>
 
-    <dialog id="kitchen-camera" aria-labelledby="kitchen-title" style="width:min(90vw, 46rem)">
-      <header class="story-head">
-        <button type="button" class="composer-close" id="kitchen-close" aria-label="Close camera">✕</button>
-        <h2 id="kitchen-title">Kitchen camera</h2>
+    <dialog id="kitchen-camera" class="camera-panel" aria-labelledby="kitchen-title">
+      <header class="camera-header">
+        <div><h2 id="kitchen-title">Kitchen</h2><p>Ring camera · Live view</p></div>
+        <button type="button" class="camera-control camera-close" id="kitchen-close" aria-label="Close camera" title="Close camera">✕</button>
       </header>
-      <div style="overflow:hidden;background:#231a18">
-        <video id="kitchen-video" playsinline muted style="display:block;width:100%;aspect-ratio:16/9"></video>
+      <div class="camera-stage">
+        <video id="kitchen-video" playsinline muted aria-label="Live video from the Kitchen camera"></video>
+        <div class="camera-state">
+          <p id="kitchen-status" role="status">Connecting to Kitchen…</p>
+          <button type="button" class="camera-control" id="kitchen-start" hidden>Try again</button>
+        </div>
       </div>
-      <p id="kitchen-status" role="status">Select Start live view to connect.</p>
-      <div>
-        <button type="button" class="ci-tool" id="kitchen-start">Start live view</button>
-        <button type="button" class="ci-tool" id="kitchen-audio" disabled>Listen</button>
-        <button type="button" class="ci-tool" id="kitchen-zoom" disabled>Zoom in</button>
-        <button type="button" class="ci-tool" id="kitchen-pip" disabled>Picture-in-Picture</button>
-        <button type="button" class="ci-tool" id="kitchen-fullscreen" disabled>Full screen</button>
+      <div class="camera-toolbar" aria-label="Camera controls">
+        <button type="button" class="camera-control" id="kitchen-audio" aria-label="Unmute camera audio" title="Unmute camera audio" disabled><span aria-hidden="true">🔇</span> <span>Listen</span></button>
+        <button type="button" class="camera-control" id="kitchen-zoom" aria-label="Zoom in" title="Zoom in" aria-pressed="false" disabled><span aria-hidden="true">⌕</span> <span>1×</span></button>
+        <button type="button" class="camera-control" id="kitchen-pip" aria-label="Pop out video in Picture-in-Picture" title="Picture-in-Picture" disabled><span aria-hidden="true">▣</span> <span>Pop out</span></button>
+        <button type="button" class="camera-control" id="kitchen-fullscreen" aria-label="Full screen" title="Full screen" disabled><span aria-hidden="true">⛶</span> <span>Full screen</span></button>
+        <button type="button" class="camera-control camera-history-toggle" id="kitchen-history-toggle" aria-expanded="false" aria-controls="kitchen-history"><span aria-hidden="true">◷</span> <span>History</span></button>
       </div>
-      <details id="kitchen-history"><summary>Viewing history</summary><p id="kitchen-history-status" role="status"></p><ol id="kitchen-history-list"></ol></details>
+      <section id="kitchen-history" class="camera-history" hidden aria-labelledby="kitchen-history-title">
+        <h3 id="kitchen-history-title">Recent live views</h3>
+        <p id="kitchen-history-status" role="status"></p>
+        <ol id="kitchen-history-list"></ol>
+      </section>
     </dialog>
 
     <!-- messages (WhatsApp-style chat between the two of you) -->
