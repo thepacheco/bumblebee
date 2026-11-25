@@ -71,6 +71,10 @@
     });
   }
 
+  // The panel lives in the check-in markup, which is hidden on the homepage.
+  // Move it to <body> so the rose shortcut can show it from anywhere.
+  document.body.append(dialog);
+
   function openKitchen() {
     if (!dialog.open) dialog.showModal();
     connect();
