@@ -1,12 +1,48 @@
 import {
-  API_ORIGIN, database, decryptTokens, readBody, ringRequest, SESSION_COOKIE, tokenDigest
+  API_ORIGIN, database, decryptTokens, encryptTokens, readBody, ringRequest, SESSION_COOKIE, tokenDigest
 } from '../lib/ring-server.mjs';
+
+async function currentAccessToken(sql, link) {
+  const tokens = decryptTokens(link.account_id, link.encrypted_tokens);
+  if (new Date(link.expires_at).getTime() > Date.now() + 30_000) return tokens.accessToken;
+
+  const [lease] = await sql`UPDATE ring_kitchen_links
+    SET expires_at = now() + interval '20 seconds'
+    WHERE account_id = ${link.account_id} AND encrypted_tokens = ${link.encrypted_tokens}
+      AND expires_at < now()
+    RETURNING account_id`;
+  if (!lease) return null;
+
+  try {
+    const response = await fetch('https://oauth.ring.com/oauth/token', {
+      method: 'POST', redirect: 'error', signal: AbortSignal.timeout(8000),
+      body: new URLSearchParams({
+        grant_type: 'refresh_token', refresh_token: tokens.refreshToken,
+        client_id: process.env.RING_CLIENT_ID, client_secret: process.env.RING_CLIENT_SECRET
+      })
+    });
+    if (!response.ok) return null;
+    const { access_token, refresh_token, expires_in } = await response.json();
+    if (!access_token || !refresh_token || !Number.isFinite(expires_in) || expires_in <= 60) return null;
+
+    const refreshed = encryptTokens(link.account_id, {
+      accessToken: access_token, refreshToken: refresh_token, expiresIn: expires_in
+    });
+    const rows = await sql`UPDATE ring_kitchen_links SET encrypted_tokens = ${refreshed},
+      expires_at = now() + ${expires_in} * interval '1 second'
+      WHERE account_id = ${link.account_id} AND encrypted_tokens = ${link.encrypted_tokens}
+      RETURNING account_id`;
+    return rows.length ? access_token : null;
+  } catch {
+    return null;
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Permissions-Policy', 'microphone=(), camera=()');
   if (!['POST', 'DELETE'].includes(req.method)) return res.status(405).end();
-  if (req.headers.origin !== 'https://www.beejan.co') return res.status(403).end();
+  if (!['https://www.beejan.co', 'https://beejan.co'].includes(req.headers.origin)) return res.status(403).end();
 
   const cookie = req.cookies?.[SESSION_COOKIE];
   if (typeof cookie !== 'string' || !/^[\w-]{43}$/.test(cookie)) return res.status(401).end();
@@ -18,8 +54,8 @@ export default async function handler(req, res) {
       WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()`;
     if (!link) return res.status(401).end();
 
-    const token = decryptTokens(link.account_id, link.encrypted_tokens).accessToken;
-    if (new Date(link.expires_at).getTime() <= Date.now()) return res.status(503).end();
+    const token = await currentAccessToken(sql, link);
+    if (!token) return res.status(503).end();
     const endpoint = `/v1/devices/${encodeURIComponent(link.device_id)}/media/streaming/whep/sessions`;
 
     if (req.method === 'DELETE') {
