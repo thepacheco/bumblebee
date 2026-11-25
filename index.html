@@ -248,6 +248,11 @@
         <button type="button" class="camera-control" id="kitchen-pip" aria-label="Pop out video in Picture-in-Picture" title="Picture-in-Picture" disabled><span aria-hidden="true">▣</span> <span>Pop out</span></button>
         <button type="button" class="camera-control" id="kitchen-fullscreen" aria-label="Full screen" title="Full screen" disabled><span aria-hidden="true">⛶</span> <span>Full screen</span></button>
         <button type="button" class="camera-control camera-history-toggle" id="kitchen-history-toggle" aria-expanded="false" aria-controls="kitchen-history"><span aria-hidden="true">◷</span> <span>History</span></button>
+        <button type="button" class="camera-control" id="kitchen-pair">Pair device</button>
+      </div>
+      <div class="camera-pairing">
+        <p id="kitchen-pair-status" role="status" hidden></p>
+        <input id="kitchen-pair-link" aria-label="One-time camera pairing link" readonly hidden>
       </div>
       <section id="kitchen-history" class="camera-history" hidden aria-labelledby="kitchen-history-title">
         <h3 id="kitchen-history-title">Recent live views</h3>
