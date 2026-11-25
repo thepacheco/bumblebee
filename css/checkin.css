@@ -336,11 +336,8 @@ body.checkin-open { overflow: hidden; }
 .camera-health small:empty { display: none; }
 .camera-health[data-state="online"] strong { color: #386539; }
 .camera-health[data-state="offline"] strong { color: #a3332b; }
-.camera-pairing:has(:not([hidden])) { padding: 0 1rem .75rem; }
-.camera-pairing input { max-width: 100%; width: min(100%, 38rem); }
 
 .camera-panel:not([data-authorized="true"]) .camera-toolbar,
-.camera-panel:not([data-authorized="true"]) .camera-pairing,
 .camera-recovery[hidden] { display: none; }
 .camera-panel:has(.camera-recovery:not([hidden])) .camera-stage { display: none; }
 .camera-recovery { padding: 1rem; border-top: 1px solid #e6d7c7; }

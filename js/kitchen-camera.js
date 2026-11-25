@@ -11,9 +11,6 @@
   const history = document.getElementById('kitchen-history');
   const historyStatus = document.getElementById('kitchen-history-status');
   const historyList = document.getElementById('kitchen-history-list');
-  const pairButton = document.getElementById('kitchen-pair');
-  const pairStatus = document.getElementById('kitchen-pair-status');
-  const pairLink = document.getElementById('kitchen-pair-link');
   const unpaired = document.getElementById('kitchen-unpaired');
   const pairEndpoint = '/api/ring-pair';
   const endpoint = '/api/ring-stream';
@@ -47,9 +44,6 @@
     setAudioLabel();
     setZoomLabel(false);
     delete dialog.dataset.live;
-    pairLink.hidden = true;
-    pairLink.value = '';
-    pairStatus.hidden = true;
     unpaired.hidden = true;
     audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
     start.hidden = !retry;
@@ -77,11 +71,13 @@
     });
   }
 
-  document.getElementById('kitchen-btn').addEventListener('click', () => {
-    dialog.showModal();
+  function openKitchen() {
+    if (!dialog.open) dialog.showModal();
     connect();
     watchCameraStatus();
-  });
+  }
+  window.openKitchen = openKitchen;
+  document.getElementById('kitchen-btn').addEventListener('click', openKitchen);
   document.getElementById('kitchen-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => {
     clearInterval(statusInterval);
@@ -127,7 +123,6 @@
       link.textContent = 'Open Beejan';
       status.replaceChildren('Camera access is available on www.beejan.co. ', link);
       historyToggle.disabled = true;
-      pairButton.disabled = true;
       return;
     }
     if (!window.RTCPeerConnection) {
@@ -250,48 +245,24 @@
     }
   });
 
-  pairButton.addEventListener('click', async () => {
-    pairButton.disabled = true;
-    pairLink.hidden = true;
-    pairLink.value = '';
-    pairStatus.hidden = false;
-    pairStatus.textContent = 'Creating a secure link…';
-    try {
-      const response = await fetch(pairEndpoint, { method: 'POST', credentials: 'same-origin' });
-      if (response.status === 401) {
-        pairStatus.textContent = 'This browser isn’t paired, so it can’t add other devices.';
-        return;
-      }
-      if (!response.ok) throw new Error('Pairing unavailable');
-      const { url } = await response.json();
-      pairLink.value = url;
-      pairLink.hidden = false;
-      pairLink.select();
-      pairStatus.textContent = 'Copy this one-time link and open it on your other device within 5 minutes.';
-    } catch {
-      pairStatus.textContent = 'Could not create a pairing link. Try again.';
-    } finally {
-      pairButton.disabled = false;
-    }
-  });
-
-  if (window.location.origin === cameraSite && window.location.hash.startsWith('#camera-pair=')) {
-    const code = window.location.hash.slice('#camera-pair='.length);
+  if (window.location.hash.startsWith('#kitchen=')) {
+    const family = window.location.hash.slice('#kitchen='.length);
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    dialog.showModal();
-    status.textContent = 'Authorizing this browser…';
-    fetch(pairEndpoint, {
-      method: 'POST', credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
-    }).then(response => {
-      if (!response.ok) throw new Error('This pairing link expired or was already used.');
-      if (dialog.open) {
-        connect();
-        watchCameraStatus();
-      }
-    }).catch(error => {
-      status.textContent = error.message;
-    });
+    if (window.location.origin !== cameraSite) {
+      window.location.replace(cameraSite + '/#kitchen=' + family);
+    } else {
+      dialog.showModal();
+      status.textContent = 'Setting up this device…';
+      fetch(pairEndpoint, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ family })
+      }).then(response => {
+        if (!response.ok) throw new Error('This family link no longer works. Ask for the new one.');
+        if (dialog.open) openKitchen();
+      }).catch(error => {
+        status.textContent = error.message;
+      });
+    }
   }
 
   pip.addEventListener('click', async () => {

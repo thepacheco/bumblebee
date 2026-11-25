@@ -1,5 +1,5 @@
 import {
-  API_ORIGIN, database, decryptTokens, encryptTokens, readBody, ringRequest, prepareCameraStatus, SESSION_AGE, SESSION_COOKIE, tokenDigest
+  API_ORIGIN, database, decryptTokens, encryptTokens, FAMILY_KEY_HASH, prepareTables, readBody, ringRequest, prepareCameraStatus, SESSION_AGE, SESSION_COOKIE, tokenDigest
 } from '../lib/ring-server.mjs';
 
 async function currentAccessToken(sql, link) {
@@ -38,6 +38,8 @@ async function currentAccessToken(sql, link) {
   }
 }
 
+let tablesReady;
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Permissions-Policy', 'microphone=(), camera=()');
@@ -54,9 +56,12 @@ export default async function handler(req, res) {
 
   try {
     const sql = database();
+    tablesReady ??= prepareTables(sql).catch(error => { tablesReady = undefined; throw error; });
+    await tablesReady;
     const [link] = await sql`SELECT l.*, v.expires_at AS viewer_expires_at FROM ring_kitchen_links l
       JOIN ring_kitchen_viewers v ON v.account_id = l.account_id
-      WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()`;
+      WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()
+        AND (v.family_hash IS NULL OR v.family_hash = ${FAMILY_KEY_HASH})`;
     if (!link) {
       console.info('Ring stream: browser authorization expired or revoked');
       return res.status(401).end();

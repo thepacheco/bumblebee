@@ -1,51 +1,44 @@
-import { randomBytes } from 'node:crypto';
-import { database, prepareTables, SESSION_COOKIE, SESSION_AGE, tokenDigest } from '../lib/ring-server.mjs';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
+import {
+  database, FAMILY_KEY_HASH, prepareTables, SESSION_AGE, SESSION_COOKIE, tokenDigest
+} from '../lib/ring-server.mjs';
 
 const SITE = 'https://www.beejan.co';
 const TOKEN = /^[\w-]{43}$/;
 
+// Redeems the family link (https://www.beejan.co/#kitchen=<secret>) and
+// authorizes this browser to view the Kitchen camera.
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Referrer-Policy', 'no-referrer');
   if (req.method !== 'POST') return res.status(405).end();
   if (req.headers.origin !== SITE) return res.status(403).end();
 
+  const family = req.body?.family;
+  if (typeof family !== 'string' || !TOKEN.test(family) ||
+      !timingSafeEqual(Buffer.from(tokenDigest(family), 'hex'), Buffer.from(FAMILY_KEY_HASH, 'hex'))) {
+    return res.status(403).end();
+  }
+
   try {
     const sql = database();
     await prepareTables(sql);
-    await sql`CREATE TABLE IF NOT EXISTS ring_kitchen_pairing (
-      token_hash text PRIMARY KEY,
-      account_id text NOT NULL REFERENCES ring_kitchen_links(account_id) ON DELETE CASCADE,
-      expires_at timestamptz NOT NULL
-    )`;
     const viewer = randomBytes(32).toString('base64url');
-    if (req.body?.code !== undefined) {
-      const { code } = req.body;
-      if (typeof code !== 'string' || !TOKEN.test(code)) return res.status(400).end();
-      const rows = await sql`WITH claimed AS (
-        DELETE FROM ring_kitchen_pairing WHERE token_hash = ${tokenDigest(code)}
-          AND expires_at > now() RETURNING account_id
-      )
-      INSERT INTO ring_kitchen_viewers (token_hash, account_id, expires_at)
-        SELECT ${tokenDigest(viewer)}, account_id, now() + interval '30 days' FROM claimed
-        RETURNING account_id`;
-      if (!rows.length) return res.status(410).end();
-      res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${viewer}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_AGE}`);
-      return res.status(204).end();
+    const rows = await sql`WITH sole_link AS (
+      SELECT min(account_id) AS account_id FROM ring_kitchen_links HAVING count(*) = 1
+    )
+    INSERT INTO ring_kitchen_viewers (token_hash, account_id, expires_at, family_hash)
+      SELECT ${tokenDigest(viewer)}, account_id, now() + interval '30 days', ${FAMILY_KEY_HASH} FROM sole_link
+      RETURNING account_id`;
+    if (!rows.length) {
+      console.warn('Ring family link: no single linked Ring account');
+      return res.status(409).end();
     }
-
-    const cookie = req.cookies?.[SESSION_COOKIE] ?? req.headers.cookie?.split(';')
-      .map(part => part.trim()).find(part => part.startsWith(SESSION_COOKIE + '='))
-      ?.slice(SESSION_COOKIE.length + 1);
-    if (typeof cookie !== 'string' || !TOKEN.test(cookie)) return res.status(401).end();
-    const rows = await sql`INSERT INTO ring_kitchen_pairing (token_hash, account_id, expires_at)
-      SELECT ${tokenDigest(viewer)}, account_id, now() + interval '5 minutes'
-      FROM ring_kitchen_viewers WHERE token_hash = ${tokenDigest(cookie)} AND expires_at > now()
-      RETURNING token_hash`;
-    if (!rows.length) return res.status(401).end();
-    return res.status(200).json({ url: `${SITE}/#camera-pair=${viewer}` });
+    console.info('Ring family link: browser authorized');
+    res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${viewer}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_AGE}`);
+    return res.status(204).end();
   } catch (error) {
-    console.error('Ring pairing: storage operation failed', error?.code ?? 'unknown');
+    console.error('Ring family link: storage operation failed', error?.code ?? 'unknown');
     return res.status(503).end();
   }
 }

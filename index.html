@@ -40,7 +40,7 @@
     <div class="hero-photo" style="background-image:url('https://loremflickr.com/1400/900/honey,jar?lock=7')"></div>
     <div class="container hero-content">
       <p class="eyebrow">Honey home remedies</p>
-      <h1>Feel better, naturally — with a little honey <button class="honey-key" id="honey-key" aria-label="honey" type="button">🍯</button></h1>
+      <h1><button class="honey-key rose-key" id="rose-key" aria-label="rose" type="button">🌹</button> Feel better, naturally — with a little honey <button class="honey-key" id="honey-key" aria-label="honey" type="button">🍯</button></h1>
       <p>Simple, honey-based remedies for coughs, colds, sore throats, sleep, skin, and more — the soothing recipes people have leaned on for generations.</p>
       <div class="hero-actions">
         <a href="#recipes" class="btn btn-primary">Browse remedies</a>
@@ -250,15 +250,10 @@
         <button type="button" class="camera-control" id="kitchen-pip" aria-label="Pop out video in Picture-in-Picture" title="Picture-in-Picture" disabled><span aria-hidden="true">▣</span> <span>Pop out</span></button>
         <button type="button" class="camera-control" id="kitchen-fullscreen" aria-label="Full screen" title="Full screen" disabled><span aria-hidden="true">⛶</span> <span>Full screen</span></button>
         <button type="button" class="camera-control camera-history-toggle" id="kitchen-history-toggle" title="See when live camera sessions started" aria-expanded="false" aria-controls="kitchen-history"><span aria-hidden="true">◷</span> <span>History</span></button>
-        <button type="button" class="camera-control" id="kitchen-pair" title="Create a one-time link for a phone or another browser">Add a device</button>
-      </div>
-      <div class="camera-pairing">
-        <p id="kitchen-pair-status" role="status" hidden></p>
-        <input id="kitchen-pair-link" aria-label="One-time camera pairing link" readonly hidden>
       </div>
       <div id="kitchen-unpaired" class="camera-recovery" hidden>
-        <h3>This device isn’t paired yet</h3>
-        <p>On a phone or browser that already shows Kitchen, open the camera and tap <strong>Add a device</strong>, then open that link here.</p>
+        <h3>This device can’t see Kitchen yet</h3>
+        <p>Open the family link you were sent on this phone or computer. You only need to do it once.</p>
       </div>
       <section id="kitchen-history" class="camera-history" hidden aria-labelledby="kitchen-history-title">
         <h3 id="kitchen-history-title">Recent live views</h3>

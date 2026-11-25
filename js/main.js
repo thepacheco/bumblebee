@@ -70,6 +70,20 @@
     armedAt = Date.now();
   });
 
+  /* Tap the 🌹 in the hero three times quickly to open the Kitchen camera. */
+  var rose = document.getElementById("rose-key");
+  var roseTaps = [];
+  if (rose) rose.addEventListener("click", function (e) {
+    e.preventDefault();
+    var now = Date.now();
+    roseTaps = roseTaps.filter(function (t) { return now - t < 1500; });
+    roseTaps.push(now);
+    if (roseTaps.length >= 3 && typeof window.openKitchen === "function") {
+      roseTaps = [];
+      window.openKitchen();
+    }
+  });
+
   document.querySelectorAll('[data-bee="home"]').forEach(function (bee) {
     bee.addEventListener("click", function () {
       if (Date.now() - armedAt < ARM_WINDOW && typeof window.openCheckin === "function") {
