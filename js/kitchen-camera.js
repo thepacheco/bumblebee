@@ -153,7 +153,8 @@
       if (track.kind === 'video') {
         zoom.disabled = false;
         fullscreen.disabled = false;
-        pip.disabled = !(document.pictureInPictureEnabled && video.requestPictureInPicture) &&
+        pip.disabled = !('documentPictureInPicture' in window) &&
+          !(document.pictureInPictureEnabled && video.requestPictureInPicture) &&
           !video.webkitSetPresentationMode;
         dialog.dataset.live = 'true';
         status.textContent = '● Live';
@@ -348,6 +349,7 @@
     zoomAt(safariScale * event.scale, stage.clientWidth / 2, stage.clientHeight / 2);
   });
   new ResizeObserver(() => applyZoom()).observe(stage);
+  window.addEventListener('resize', () => applyZoom());
 
   audio.addEventListener('click', () => {
     video.muted = !video.muted;
@@ -436,15 +438,160 @@
     }
   }
 
+  /* ---------- pop out ----------
+     1. Chrome/Edge on computers: a real pop-out window holding the live view,
+        so the current zoom carries over and it can be zoomed inside the window.
+     2. Elsewhere, when zoomed in: the zoomed area is drawn into its own video,
+        and that video pops out. It follows zoom changes made on the page.
+     3. Otherwise: the normal video pop-out. */
+  let pipWindow = null;
+  let mirror = null;
+
+  function stagePlaceholder() {
+    let note = dialog.querySelector('.camera-popped');
+    if (!note) {
+      note = document.createElement('div');
+      note.className = 'camera-popped';
+      note.textContent = 'Kitchen is playing in the pop-out window.';
+      note.hidden = true;
+      stageHome.parent.insertBefore(note, stageHome.next);
+    }
+    return note;
+  }
+  const stageHome = { parent: stage.parentElement, next: stage.nextSibling };
+
+  async function openWindowPip() {
+    const win = await window.documentPictureInPicture.requestWindow({ width: 560, height: 315 });
+    pipWindow = win;
+    const css = win.document.createElement('style');
+    css.textContent = `
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; }
+      .camera-stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000;
+        touch-action: none; cursor: zoom-in; user-select: none; -webkit-user-select: none; aspect-ratio: auto; }
+      .camera-stage[data-zoomed="true"] { cursor: grab; }
+      .camera-stage video { display: block; width: 100%; height: 100%; object-fit: contain; }
+      .camera-state { display: none; }
+      .pip-zoom { position: fixed; right: 8px; bottom: 8px; display: flex; gap: 4px; opacity: .25; transition: opacity .2s; }
+      body:hover .pip-zoom { opacity: 1; }
+      .pip-zoom button { min-width: 34px; height: 30px; border: 0; border-radius: 6px; background: #000000b3; color: #fff;
+        font: 600 15px system-ui, sans-serif; cursor: pointer; }
+      .pip-zoom button:hover { background: #000; }`;
+    win.document.head.append(css);
+    win.document.title = 'Kitchen';
+    const controls = win.document.createElement('div');
+    controls.className = 'pip-zoom';
+    const button = (label, title, action) => {
+      const el = win.document.createElement('button');
+      el.type = 'button'; el.textContent = label; el.title = title;
+      el.addEventListener('click', action);
+      return el;
+    };
+    const center = () => [stage.clientWidth / 2, stage.clientHeight / 2];
+    controls.append(
+      button('−', 'Zoom out', () => zoomAt(view.scale / 1.4, ...center())),
+      button('+', 'Zoom in', () => zoomAt(view.scale * 1.4, ...center())),
+      button('1×', 'Reset zoom', resetZoom));
+    // Keep the zoom framing: remember the visible spot as a fraction of the view.
+    const before = { w: stage.clientWidth, h: stage.clientHeight };
+    win.document.body.append(stage, controls);
+    stagePlaceholder().hidden = false;
+    video.play().catch(() => {});
+    const ratio = stage.clientWidth / (before.w || stage.clientWidth);
+    view.x *= ratio; view.y *= stage.clientHeight / (before.h || stage.clientHeight);
+    applyZoom();
+    win.addEventListener('resize', () => applyZoom());
+    win.addEventListener('pagehide', () => {
+      if (pipWindow !== win) return;
+      pipWindow = null;
+      const w = stage.clientWidth, h = stage.clientHeight;
+      stageHome.parent.insertBefore(stage, stageHome.next);
+      stagePlaceholder().hidden = true;
+      video.play().catch(() => {});
+      if (w) { view.x *= stage.clientWidth / w; view.y *= stage.clientHeight / (h || 1); }
+      applyZoom();
+    });
+  }
+
+  // Which part of the camera image is visible on the page right now.
+  function visibleSource() {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const W = stage.clientWidth, H = stage.clientHeight;
+    if (!vw || !vh || !W || !H) return null;
+    const k = Math.min(W / vw, H / vh);
+    const ox = (W - vw * k) / 2, oy = (H - vh * k) / 2;
+    let sx = (-view.x / view.scale - ox) / k, sy = (-view.y / view.scale - oy) / k;
+    let sw = W / view.scale / k, sh = H / view.scale / k;
+    const x0 = Math.max(0, sx), y0 = Math.max(0, sy);
+    const x1 = Math.min(vw, sx + sw), y1 = Math.min(vh, sy + sh);
+    return { sx: x0, sy: y0, sw: Math.max(1, x1 - x0), sh: Math.max(1, y1 - y0) };
+  }
+
+  async function openMirrorPip() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280; canvas.height = 720;
+    const context = canvas.getContext('2d');
+    const out = document.createElement('video');
+    out.muted = true; out.playsInline = true;
+    out.srcObject = canvas.captureStream(30);
+    const state = { canvas, out, running: true };
+    mirror = state;
+    const draw = () => {
+      if (!state.running) return;
+      const src = visibleSource();
+      if (src) {
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        const fit = Math.min(canvas.width / src.sw, canvas.height / src.sh);
+        const dw = src.sw * fit, dh = src.sh * fit;
+        context.drawImage(video, src.sx, src.sy, src.sw, src.sh,
+          (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+      }
+    };
+    // Timers keep drawing while the page is in the background (rAF would stop).
+    state.timer = setInterval(draw, 1000 / 24);
+    draw();
+    await out.play();
+    const stopMirror = () => {
+      state.running = false;
+      clearInterval(state.timer);
+      out.srcObject?.getTracks().forEach(track => track.stop());
+      if (mirror === state) mirror = null;
+    };
+    out.addEventListener('leavepictureinpicture', stopMirror, { once: true });
+    out.addEventListener('webkitpresentationmodechanged', () => {
+      if (out.webkitPresentationMode !== 'picture-in-picture') stopMirror();
+    });
+    try {
+      if (out.requestPictureInPicture) await out.requestPictureInPicture();
+      else out.webkitSetPresentationMode('picture-in-picture');
+    } catch (error) {
+      stopMirror();
+      throw error;
+    }
+  }
+
+  async function closePip() {
+    if (pipWindow) { pipWindow.close(); return true; }
+    if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return true; }
+    if (mirror?.out.webkitPresentationMode === 'picture-in-picture') { mirror.out.webkitSetPresentationMode('inline'); return true; }
+    if (video.webkitPresentationMode === 'picture-in-picture') { video.webkitSetPresentationMode('inline'); return true; }
+    return false;
+  }
+
   pip.addEventListener('click', async () => {
     try {
-      if (document.pictureInPictureElement === video) await document.exitPictureInPicture();
+      if (await closePip()) return;
+      const zoomed = view.scale > 1.01;
+      const canMirror = typeof HTMLCanvasElement.prototype.captureStream === 'function' &&
+        ((document.pictureInPictureEnabled && HTMLVideoElement.prototype.requestPictureInPicture) ||
+         'webkitSetPresentationMode' in HTMLVideoElement.prototype);
+      if ('documentPictureInPicture' in window) await openWindowPip();
+      else if (zoomed && canMirror) await openMirrorPip();
       else if (document.pictureInPictureEnabled && video.requestPictureInPicture) await video.requestPictureInPicture();
-      else if (video.webkitSetPresentationMode) {
-        video.webkitSetPresentationMode(video.webkitPresentationMode === 'picture-in-picture' ? 'inline' : 'picture-in-picture');
-      }
+      else if (video.webkitSetPresentationMode) video.webkitSetPresentationMode('picture-in-picture');
     } catch {
-      status.textContent = 'Picture-in-Picture is unavailable in this browser.';
+      status.textContent = 'Pop out is unavailable in this browser.';
     }
   });
+  dialog.addEventListener('close', () => { closePip().catch(() => {}); });
 })();
