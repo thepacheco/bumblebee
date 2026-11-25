@@ -329,3 +329,12 @@ body.checkin-open { overflow: hidden; }
 .camera-history { padding: .9rem 1rem; border-top: 1px solid #e6d7c7; max-height: 12rem; overflow: auto; }
 .camera-history p, .camera-history ol { margin: .4rem 0 0; }
 @media (max-width: 520px) { .camera-toolbar { gap: .3rem; padding: .6rem; } .camera-control { padding: .3rem .45rem; font-size: .75rem; } }
+
+.camera-header-actions { display: flex; align-items: center; gap: .75rem; }
+.camera-health { text-align: right; font-size: .82rem; line-height: 1.25; }
+.camera-health small { display: block; color: #705747; }
+.camera-health small:empty { display: none; }
+.camera-health[data-state="online"] strong { color: #386539; }
+.camera-health[data-state="offline"] strong { color: #a3332b; }
+.camera-pairing:has(:not([hidden])) { padding: 0 1rem .75rem; }
+.camera-pairing input { max-width: 100%; width: min(100%, 38rem); }
