@@ -305,3 +305,27 @@ body.checkin-open { overflow: hidden; }
 .pc-btn { border: 0; border-radius: 999px; padding: .35rem .7rem; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
 .pc-yes { background: var(--rose); color: #2b1620; }
 .pc-no { background: rgba(255,255,255,.16); color: var(--cream); }
+
+/* Kitchen live camera */
+.camera-panel { width: min(calc(100% - 1.5rem), 48rem); max-height: calc(100dvh - 1.5rem); padding: 0; border: 1px solid #e6d7c7; border-radius: 1.15rem; background: #fffaf3; color: #30221b; box-shadow: 0 24px 90px #1d120f55; overflow: auto; }
+.camera-panel::backdrop { background: #1c1512b0; }
+.camera-header, .camera-toolbar { display: flex; align-items: center; gap: .5rem; padding: .85rem 1rem; }
+.camera-header { justify-content: space-between; }
+.camera-header h2, .camera-history h3 { margin: 0; line-height: 1.2; }
+.camera-header p { margin: .2rem 0 0; color: #705747; font-size: .83rem; }
+.camera-stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #201916; }
+.camera-stage video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.camera-state { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; padding: 1rem; color: #fff7e8; pointer-events: none; }
+.camera-state p { margin: .35rem 0; }
+.camera-panel[data-live="true"] .camera-state { inset: .65rem auto auto .75rem; padding: .2rem .55rem; background: #211a16de; border-radius: .4rem; font-size: .8rem; }
+.camera-control { min-height: 2.65rem; padding: .35rem .65rem; display: inline-flex; align-items: center; justify-content: center; gap: .35rem; border: 1px solid #dbcaba; border-radius: .55rem; background: #fffaf3; color: #35261e; font: inherit; font-size: .83rem; cursor: pointer; pointer-events: auto; }
+.camera-control[hidden], .camera-history[hidden] { display: none; }
+.camera-control:not(:disabled):hover, .camera-control[aria-pressed="true"], .camera-control[aria-expanded="true"] { background: #f2e1c7; }
+.camera-control:focus-visible { outline: 2px solid #9a5b24; outline-offset: 2px; }
+.camera-control:disabled { opacity: .48; cursor: default; }
+.camera-close { min-width: 2.65rem; }
+.camera-toolbar { flex-wrap: wrap; }
+.camera-history-toggle { margin-left: auto; }
+.camera-history { padding: .9rem 1rem; border-top: 1px solid #e6d7c7; max-height: 12rem; overflow: auto; }
+.camera-history p, .camera-history ol { margin: .4rem 0 0; }
+@media (max-width: 520px) { .camera-toolbar { gap: .3rem; padding: .6rem; } .camera-control { padding: .3rem .45rem; font-size: .75rem; } }
