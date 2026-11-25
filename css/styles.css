@@ -230,6 +230,12 @@ img { max-width: 100%; display: block; }
 .social a { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.08); display: grid; place-items: center; color: var(--cream); font-size: .95rem; transition: background .2s; }
 .social a:hover { background: var(--honey); color: var(--espresso); }
 .footer-bottom { margin-top: 2.2rem; padding-top: 1.4rem; border-top: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; flex-wrap: wrap; gap: .6rem; font-size: .82rem; }
+.photo-credits { margin-top: 1.6rem; font-size: .78rem; color: rgba(255,255,255,.6); }
+.photo-credits summary { cursor: pointer; color: rgba(255,255,255,.75); }
+.photo-credits p { margin: .6rem 0 .4rem; }
+.photo-credits ul { margin: 0; padding-left: 1.1rem; columns: 2 22rem; column-gap: 2rem; }
+.photo-credits li { margin-bottom: .25rem; break-inside: avoid; }
+.photo-credits a { color: rgba(255,255,255,.8); text-decoration: underline; }
 .footer-brand .logo-btn { border-radius: 50%; transition: transform .12s ease; -webkit-tap-highlight-color: transparent; }
 .footer-brand .logo-btn:active { transform: scale(.92); }
 
