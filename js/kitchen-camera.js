@@ -160,9 +160,18 @@
         video.play().catch(() => { video.controls = true; });
       }
     };
+    // 'disconnected' is often a brief network blip that recovers on its own,
+    // so give it a few seconds before treating the stream as ended.
+    let dropTimer;
     peer.onconnectionstatechange = () => {
-      if (active === connection && ['failed', 'closed', 'disconnected'].includes(peer.connectionState)) {
+      if (active !== connection) return;
+      clearTimeout(dropTimer);
+      if (['failed', 'closed'].includes(peer.connectionState)) {
         stop('Live view ended.', true);
+      } else if (peer.connectionState === 'disconnected') {
+        dropTimer = setTimeout(() => {
+          if (active === connection && peer.connectionState !== 'connected') stop('Live view ended.', true);
+        }, 6000);
       }
     };
 
