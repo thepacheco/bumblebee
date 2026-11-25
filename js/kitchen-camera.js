@@ -40,9 +40,8 @@
     release(connection);
     video.srcObject = null;
     video.muted = true;
-    video.style.transform = '';
+    resetZoom();
     setAudioLabel();
-    setZoomLabel(false);
     delete dialog.dataset.live;
     unpaired.hidden = true;
     audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
@@ -153,7 +152,7 @@
       if (track.kind === 'audio') audio.disabled = false;
       if (track.kind === 'video') {
         zoom.disabled = false;
-        fullscreen.disabled = !(video.requestFullscreen || video.webkitEnterFullscreen);
+        fullscreen.disabled = false;
         pip.disabled = !(document.pictureInPictureEnabled && video.requestPictureInPicture) &&
           !video.webkitSetPresentationMode;
         dialog.dataset.live = 'true';
@@ -216,32 +215,176 @@
     audio.lastElementChild.textContent = video.muted ? 'Listen' : 'Mute';
   }
 
-  function setZoomLabel(enlarged) {
-    const label = enlarged ? 'Reset zoom' : 'Zoom in';
-    zoom.setAttribute('aria-label', label);
-    zoom.setAttribute('aria-pressed', String(enlarged));
-    zoom.title = label;
-    zoom.lastElementChild.textContent = enlarged ? '1.75×' : '1×';
+  /* ---------- zoom: pinch, double-tap/double-click, wheel/trackpad, drag ---------- */
+  const stage = video.parentElement;
+  const MAX_ZOOM = 5;
+  const view = { scale: 1, x: 0, y: 0 };
+  const pointers = new Map();
+  let gesture = null;
+  let lastTap = 0;
+
+  function clampView() {
+    view.scale = Math.min(MAX_ZOOM, Math.max(1, view.scale));
+    const width = stage.clientWidth, height = stage.clientHeight;
+    view.x = Math.min(0, Math.max(width - width * view.scale, view.x));
+    view.y = Math.min(0, Math.max(height - height * view.scale, view.y));
   }
+
+  function applyZoom() {
+    clampView();
+    video.style.transformOrigin = '0 0';
+    video.style.transform = view.scale === 1 ? '' : `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+    const zoomed = view.scale > 1.01;
+    stage.dataset.zoomed = String(zoomed);
+    zoom.setAttribute('aria-pressed', String(zoomed));
+    zoom.setAttribute('aria-label', zoomed ? 'Reset zoom' : 'Zoom in');
+    zoom.title = zoomed ? 'Reset zoom' : 'Zoom in (or pinch, double-tap, scroll)';
+    zoom.lastElementChild.textContent = (Math.round(view.scale * 10) / 10) + '×';
+  }
+
+  function zoomAt(scale, px, py) {
+    const next = Math.min(MAX_ZOOM, Math.max(1, scale));
+    view.x = px - (px - view.x) * (next / view.scale);
+    view.y = py - (py - view.y) * (next / view.scale);
+    view.scale = next;
+    applyZoom();
+  }
+
+  function resetZoom() {
+    view.scale = 1; view.x = 0; view.y = 0;
+    pointers.clear();
+    gesture = null;
+    applyZoom();
+  }
+
+  function stagePoint(event) {
+    const box = stage.getBoundingClientRect();
+    return { x: event.clientX - box.left, y: event.clientY - box.top };
+  }
+
+  function live() { return dialog.dataset.live === 'true'; }
+
+  function beginGesture() {
+    const points = [...pointers.values()];
+    if (points.length >= 2) {
+      const [a, b] = points;
+      gesture = {
+        type: 'pinch', scale: view.scale,
+        distance: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, x: view.x, y: view.y
+      };
+    } else if (points.length === 1) {
+      gesture = { type: 'pan', start: points[0], x: view.x, y: view.y };
+    } else {
+      gesture = null;
+    }
+  }
+
+  stage.addEventListener('pointerdown', event => {
+    if (!live() || event.target.closest('button')) return;
+    stage.setPointerCapture?.(event.pointerId);
+    pointers.set(event.pointerId, stagePoint(event));
+    beginGesture();
+  });
+  stage.addEventListener('pointermove', event => {
+    if (!pointers.has(event.pointerId) || !gesture) return;
+    pointers.set(event.pointerId, stagePoint(event));
+    const points = [...pointers.values()];
+    if (gesture.type === 'pinch' && points.length >= 2) {
+      const [a, b] = points;
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const next = Math.min(MAX_ZOOM, Math.max(1, gesture.scale * distance / gesture.distance));
+      view.scale = next;
+      view.x = mid.x - (gesture.mid.x - gesture.x) * (next / gesture.scale);
+      view.y = mid.y - (gesture.mid.y - gesture.y) * (next / gesture.scale);
+      applyZoom();
+    } else if (gesture.type === 'pan' && view.scale > 1) {
+      const point = points[0];
+      view.x = gesture.x + point.x - gesture.start.x;
+      view.y = gesture.y + point.y - gesture.start.y;
+      applyZoom();
+    }
+  });
+  function endPointer(event) {
+    if (!pointers.has(event.pointerId)) return;
+    const wasTap = gesture?.type === 'pan' && pointers.size === 1 &&
+      Math.hypot(stagePoint(event).x - gesture.start.x, stagePoint(event).y - gesture.start.y) < 10;
+    pointers.delete(event.pointerId);
+    beginGesture();
+    if (!wasTap) return;
+    const now = Date.now();
+    if (now - lastTap < 320) {
+      lastTap = 0;
+      if (view.scale > 1.01) resetZoom();
+      else { const p = stagePoint(event); zoomAt(2.5, p.x, p.y); }
+    } else {
+      lastTap = now;
+    }
+  }
+  stage.addEventListener('pointerup', endPointer);
+  stage.addEventListener('pointercancel', endPointer);
+  stage.addEventListener('wheel', event => {
+    if (!live()) return;
+    event.preventDefault();
+    const p = stagePoint(event);
+    const speed = event.ctrlKey ? 0.01 : 0.002; // ctrlKey = trackpad pinch
+    zoomAt(view.scale * Math.exp(-event.deltaY * speed), p.x, p.y);
+  }, { passive: false });
+  // Safari trackpad pinch
+  let safariScale = 1;
+  stage.addEventListener('gesturestart', event => { event.preventDefault(); safariScale = view.scale; });
+  stage.addEventListener('gesturechange', event => {
+    event.preventDefault();
+    zoomAt(safariScale * event.scale, stage.clientWidth / 2, stage.clientHeight / 2);
+  });
+  new ResizeObserver(() => applyZoom()).observe(stage);
 
   audio.addEventListener('click', () => {
     video.muted = !video.muted;
     setAudioLabel();
   });
   zoom.addEventListener('click', () => {
-    const enlarged = Boolean(video.style.transform);
-    video.style.transform = enlarged ? '' : 'scale(1.75)';
-    setZoomLabel(!enlarged);
+    const steps = [1, 2, 3];
+    const next = steps.find(step => step > view.scale + 0.05) ?? 1;
+    if (next === 1) resetZoom();
+    else zoomAt(next, stage.clientWidth / 2, stage.clientHeight / 2);
   });
+
+  /* ---------- full screen: the whole panel, so zoom and controls keep working ---------- */
+  function isFullscreen() { return dialog.classList.contains('is-fullscreen'); }
+  function setFullscreenLabel() {
+    const on = isFullscreen();
+    fullscreen.setAttribute('aria-pressed', String(on));
+    fullscreen.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    fullscreen.lastElementChild.textContent = on ? 'Exit full screen' : 'Full screen';
+  }
+  function leaveFullscreen() {
+    dialog.classList.remove('is-fullscreen');
+    const element = document.fullscreenElement || document.webkitFullscreenElement;
+    if (element) Promise.resolve((document.exitFullscreen || document.webkitExitFullscreen).call(document)).catch(() => {});
+    setFullscreenLabel();
+  }
   fullscreen.addEventListener('click', async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else if (video.requestFullscreen) await video.requestFullscreen();
-      else video.webkitEnterFullscreen();
-    } catch {
-      status.textContent = 'Full screen is unavailable in this browser.';
+    if (isFullscreen()) return leaveFullscreen();
+    dialog.classList.add('is-fullscreen'); // fills the window even where the browser has no full-screen API (iPhone)
+    setFullscreenLabel();
+    const request = dialog.requestFullscreen || dialog.webkitRequestFullscreen;
+    if (request) {
+      try { await request.call(dialog, { navigationUI: 'hide' }); } catch { /* the in-page full window still applies */ }
     }
   });
+  const fullscreenChanged = () => {
+    if (!(document.fullscreenElement || document.webkitFullscreenElement) && isFullscreen() && dialog.dataset.nativeFullscreen) {
+      dialog.classList.remove('is-fullscreen');
+      setFullscreenLabel();
+    }
+    if (document.fullscreenElement || document.webkitFullscreenElement) dialog.dataset.nativeFullscreen = 'true';
+    else delete dialog.dataset.nativeFullscreen;
+  };
+  document.addEventListener('fullscreenchange', fullscreenChanged);
+  document.addEventListener('webkitfullscreenchange', fullscreenChanged);
+  dialog.addEventListener('close', leaveFullscreen);
 
   historyToggle.addEventListener('click', async () => {
     history.hidden = !history.hidden;

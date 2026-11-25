@@ -314,7 +314,20 @@ body.checkin-open { overflow: hidden; }
 .camera-header h2, .camera-history h3 { margin: 0; line-height: 1.2; }
 .camera-header p { margin: .2rem 0 0; color: #705747; font-size: .83rem; }
 .camera-stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #201916; }
-.camera-stage video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.camera-stage video { display: block; width: 100%; height: 100%; object-fit: contain; will-change: transform; }
+.camera-panel[data-live="true"] .camera-stage { touch-action: none; cursor: zoom-in; user-select: none; -webkit-user-select: none; }
+.camera-panel[data-live="true"] .camera-stage[data-zoomed="true"] { cursor: grab; }
+.camera-panel[data-live="true"] .camera-stage[data-zoomed="true"]:active { cursor: grabbing; }
+
+/* full screen: the panel fills the whole screen; the video takes all space between header and controls */
+.camera-panel.is-fullscreen { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; display: flex; flex-direction: column; background: #000; color: #fff7e8; overflow: hidden; }
+.camera-panel.is-fullscreen:not([open]) { display: none; }
+.camera-panel.is-fullscreen .camera-header { background: #000; padding: max(.5rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) .5rem max(1rem, env(safe-area-inset-left)); }
+.camera-panel.is-fullscreen .camera-header p, .camera-panel.is-fullscreen .camera-health small { color: #c9b8a8; }
+.camera-panel.is-fullscreen .camera-stage { flex: 1 1 auto; min-height: 0; aspect-ratio: auto; background: #000; }
+.camera-panel.is-fullscreen .camera-toolbar { background: #000; padding-bottom: max(.6rem, env(safe-area-inset-bottom)); }
+.camera-panel.is-fullscreen .camera-history { background: #fffaf3; color: #30221b; }
+.camera-panel.is-fullscreen:fullscreen { width: 100%; height: 100%; }
 .camera-state { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; padding: 1rem; color: #fff7e8; pointer-events: none; }
 .camera-state p { margin: .35rem 0; }
 .camera-panel[data-live="true"] .camera-state { inset: .65rem auto auto .75rem; padding: .2rem .55rem; background: #211a16de; border-radius: .4rem; font-size: .8rem; }
