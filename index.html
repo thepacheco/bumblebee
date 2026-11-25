@@ -247,17 +247,20 @@
         <button type="button" class="camera-control" id="kitchen-zoom" aria-label="Zoom in" title="Zoom in" aria-pressed="false" disabled><span aria-hidden="true">⌕</span> <span>1×</span></button>
         <button type="button" class="camera-control" id="kitchen-pip" aria-label="Pop out video in Picture-in-Picture" title="Picture-in-Picture" disabled><span aria-hidden="true">▣</span> <span>Pop out</span></button>
         <button type="button" class="camera-control" id="kitchen-fullscreen" aria-label="Full screen" title="Full screen" disabled><span aria-hidden="true">⛶</span> <span>Full screen</span></button>
-        <button type="button" class="camera-control camera-history-toggle" id="kitchen-history-toggle" aria-expanded="false" aria-controls="kitchen-history"><span aria-hidden="true">◷</span> <span>History</span></button>
-        <button type="button" class="camera-control" id="kitchen-pair">Pair device</button>
+        <button type="button" class="camera-control camera-history-toggle" id="kitchen-history-toggle" title="See when live camera sessions started" aria-expanded="false" aria-controls="kitchen-history"><span aria-hidden="true">◷</span> <span>History</span></button>
+        <button type="button" class="camera-control" id="kitchen-pair" title="Create a one-time link for a phone or another browser">Add a device</button>
       </div>
       <div class="camera-pairing">
         <p id="kitchen-pair-status" role="status" hidden></p>
         <input id="kitchen-pair-link" aria-label="One-time camera pairing link" readonly hidden>
       </div>
-      <form id="kitchen-recovery" class="camera-history" hidden>
-        <label for="kitchen-recovery-key">Owner recovery key</label>
-        <input type="password" id="kitchen-recovery-key" maxlength="128" autocomplete="current-password" required>
-        <button type="submit" class="camera-control">Restore access</button>
+      <form id="kitchen-recovery" class="camera-recovery" hidden>
+        <h3>Set up camera access</h3>
+        <label for="kitchen-recovery-key">Enter the passphrase saved for this camera.</label>
+        <div class="camera-recovery-row">
+          <input type="text" id="kitchen-recovery-key" maxlength="128" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+          <button type="submit" class="camera-control camera-primary">Unlock camera →</button>
+        </div>
         <p id="kitchen-recovery-status" role="status"></p>
       </form>
       <section id="kitchen-history" class="camera-history" hidden aria-labelledby="kitchen-history-title">
