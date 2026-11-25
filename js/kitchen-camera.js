@@ -11,6 +11,10 @@
   const history = document.getElementById('kitchen-history');
   const historyStatus = document.getElementById('kitchen-history-status');
   const historyList = document.getElementById('kitchen-history-list');
+  const pairButton = document.getElementById('kitchen-pair');
+  const pairStatus = document.getElementById('kitchen-pair-status');
+  const pairLink = document.getElementById('kitchen-pair-link');
+  const pairEndpoint = '/api/ring-pair';
   const endpoint = '/api/ring-stream';
   const cameraSite = 'https://www.beejan.co';
   let active;
@@ -38,6 +42,9 @@
     setAudioLabel();
     setZoomLabel(false);
     delete dialog.dataset.live;
+    pairLink.hidden = true;
+    pairLink.value = '';
+    pairStatus.hidden = true;
     audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
     start.hidden = !retry;
     start.disabled = false;
@@ -84,6 +91,7 @@
       link.textContent = 'Open Beejan';
       status.replaceChildren('Camera access is available on www.beejan.co. ', link);
       historyToggle.disabled = true;
+      pairButton.disabled = true;
       return;
     }
     if (!window.RTCPeerConnection) {
@@ -202,6 +210,47 @@
       historyStatus.textContent = 'Viewing history is unavailable on this device.';
     }
   });
+
+  pairButton.addEventListener('click', async () => {
+    pairButton.disabled = true;
+    pairLink.hidden = true;
+    pairLink.value = '';
+    pairStatus.hidden = false;
+    pairStatus.textContent = 'Creating a secure link…';
+    try {
+      const response = await fetch(pairEndpoint, { method: 'POST', credentials: 'same-origin' });
+      if (response.status === 401) {
+        pairStatus.textContent = 'Link Kitchen in Ring from this browser before adding another device.';
+        return;
+      }
+      if (!response.ok) throw new Error('Pairing unavailable');
+      const { url } = await response.json();
+      pairLink.value = url;
+      pairLink.hidden = false;
+      pairLink.select();
+      pairStatus.textContent = 'Copy this one-time link and open it on your other device within 5 minutes.';
+    } catch {
+      pairStatus.textContent = 'Could not create a pairing link. Try again.';
+    } finally {
+      pairButton.disabled = false;
+    }
+  });
+
+  if (window.location.origin === cameraSite && window.location.hash.startsWith('#camera-pair=')) {
+    const code = window.location.hash.slice('#camera-pair='.length);
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    dialog.showModal();
+    status.textContent = 'Authorizing this browser…';
+    fetch(pairEndpoint, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
+    }).then(response => {
+      if (!response.ok) throw new Error('This pairing link expired or was already used.');
+      if (dialog.open) connect();
+    }).catch(error => {
+      status.textContent = error.message;
+    });
+  }
 
   pip.addEventListener('click', async () => {
     try {
