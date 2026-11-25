@@ -87,7 +87,8 @@ export default async function handler(req, res) {
 
     res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${viewer}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_AGE}`);
     console.info('Ring link: browser authorization saved');
-    return res.status(200).send(`Kitchen linked to ${accountIdentifier}. This browser can now open the Kitchen camera in Beejan.`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kitchen linked</title><main><h1>Kitchen linked</h1><p>This browser is authorized. Open Camera in the Beejan check-in. To use your phone, choose Pair device in the camera panel.</p><p><a href="https://www.beejan.co/">Open Beejan</a></p></main></html>');
   } catch {
     console.error('Ring link failed:', step);
     return res.status(502).send('Could not complete Ring account linking.');
