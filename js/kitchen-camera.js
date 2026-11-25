@@ -292,7 +292,19 @@
         method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recovery })
       });
-      if (response.status === 409) throw new Error('Kitchen needs to be connected in the Ring Appstore first.');
+      if (response.status === 409) {
+        const { error } = await response.json();
+        const messages = {
+          no_ring_grant: 'Passphrase accepted. Beejan has no saved Ring grant for this camera.',
+          ring_grant_unavailable: 'Passphrase accepted. Ring rejected the saved authorization.',
+          ring_owner_mismatch: 'The Ring account email differs from the owner email configured for Beejan.',
+          ring_device_permission: 'Ring did not grant access to the camera list.',
+          ring_kitchen_missing: 'Ring did not return exactly one shared camera named Kitchen.',
+          ring_link_pending: 'Ring has not confirmed the Kitchen integration.',
+          multiple_links: 'Beejan found multiple linked accounts and could not select Kitchen safely.'
+        };
+        throw new Error(messages[error] || 'Beejan could not identify your Kitchen camera.');
+      }
       if (response.status === 403) throw new Error('That recovery key did not match.');
       if (!response.ok) {
         const { error } = await response.json().catch(() => ({}));
