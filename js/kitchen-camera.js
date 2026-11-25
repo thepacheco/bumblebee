@@ -7,6 +7,7 @@
   const zoom = document.getElementById('kitchen-zoom');
   const pip = document.getElementById('kitchen-pip');
   const fullscreen = document.getElementById('kitchen-fullscreen');
+  const historyToggle = document.getElementById('kitchen-history-toggle');
   const history = document.getElementById('kitchen-history');
   const historyStatus = document.getElementById('kitchen-history-status');
   const historyList = document.getElementById('kitchen-history-list');
@@ -26,16 +27,18 @@
     }
   }
 
-  function stop(message = 'Select Start live view to connect.') {
+  function stop(message = 'Connecting to Kitchen…', retry = false) {
     const connection = active;
     active = undefined;
     release(connection);
     video.srcObject = null;
     video.muted = true;
     video.style.transform = '';
-    audio.textContent = 'Listen';
-    zoom.textContent = 'Zoom in';
+    setAudioLabel();
+    setZoomLabel(false);
+    delete dialog.dataset.live;
     audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
+    start.hidden = !retry;
     start.disabled = false;
     status.textContent = message;
   }
@@ -60,12 +63,19 @@
     });
   }
 
-  document.getElementById('kitchen-btn').addEventListener('click', () => dialog.showModal());
+  document.getElementById('kitchen-btn').addEventListener('click', () => {
+    dialog.showModal();
+    connect();
+  });
   document.getElementById('kitchen-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => stop());
   window.addEventListener('pagehide', () => stop());
 
-  start.addEventListener('click', async () => {
+  start.addEventListener('click', connect);
+
+  async function connect() {
+    if (active) return;
+    start.hidden = true;
     if (!window.RTCPeerConnection) {
       status.textContent = 'This browser does not support live view.';
       return;
@@ -78,6 +88,7 @@
     video.srcObject = media;
     start.disabled = true;
     status.textContent = 'Connecting to Kitchen…';
+    status.hidden = false;
 
     peer.addTransceiver('video', { direction: 'recvonly' });
     peer.addTransceiver('audio', { direction: 'recvonly' });
@@ -90,13 +101,14 @@
         fullscreen.disabled = !(video.requestFullscreen || video.webkitEnterFullscreen);
         pip.disabled = !(document.pictureInPictureEnabled && video.requestPictureInPicture) &&
           !video.webkitSetPresentationMode;
-        status.textContent = 'Kitchen live view';
+        dialog.dataset.live = 'true';
+        status.textContent = '● Live';
         video.play().catch(() => { video.controls = true; });
       }
     };
     peer.onconnectionstatechange = () => {
       if (active === connection && ['failed', 'closed', 'disconnected'].includes(peer.connectionState)) {
-        stop('Live view ended. Select Start live view to reconnect.');
+        stop('Live view ended.', true);
       }
     };
 
@@ -121,18 +133,34 @@
       }
       await peer.setRemoteDescription({ type: 'answer', sdp: answer });
     } catch (error) {
-      if (active === connection) stop(error.message);
+      if (active === connection) stop(error.message, true);
     }
-  });
+  }
+
+  function setAudioLabel() {
+    const label = video.muted ? 'Unmute camera audio' : 'Mute camera audio';
+    audio.setAttribute('aria-label', label);
+    audio.title = label;
+    audio.firstElementChild.textContent = video.muted ? '🔇' : '🔊';
+    audio.lastElementChild.textContent = video.muted ? 'Listen' : 'Mute';
+  }
+
+  function setZoomLabel(enlarged) {
+    const label = enlarged ? 'Reset zoom' : 'Zoom in';
+    zoom.setAttribute('aria-label', label);
+    zoom.setAttribute('aria-pressed', String(enlarged));
+    zoom.title = label;
+    zoom.lastElementChild.textContent = enlarged ? '1.75×' : '1×';
+  }
 
   audio.addEventListener('click', () => {
     video.muted = !video.muted;
-    audio.textContent = video.muted ? 'Listen' : 'Mute';
+    setAudioLabel();
   });
   zoom.addEventListener('click', () => {
     const enlarged = Boolean(video.style.transform);
     video.style.transform = enlarged ? '' : 'scale(1.75)';
-    zoom.textContent = enlarged ? 'Zoom in' : 'Reset zoom';
+    setZoomLabel(!enlarged);
   });
   fullscreen.addEventListener('click', async () => {
     try {
@@ -144,8 +172,10 @@
     }
   });
 
-  history.addEventListener('toggle', async () => {
-    if (!history.open) return;
+  historyToggle.addEventListener('click', async () => {
+    history.hidden = !history.hidden;
+    historyToggle.setAttribute('aria-expanded', String(!history.hidden));
+    if (history.hidden) return;
     historyList.replaceChildren();
     historyStatus.textContent = 'Loading viewing history…';
     try {
