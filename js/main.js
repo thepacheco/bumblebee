@@ -80,7 +80,7 @@
     roseTaps.push(now);
     if (roseTaps.length >= 3 && typeof window.openKitchen === "function") {
       roseTaps = [];
-      window.openKitchen();
+      window.openKitchen({ rose: true });
     }
   });
 

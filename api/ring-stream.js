@@ -1,5 +1,5 @@
 import {
-  API_ORIGIN, database, decryptTokens, encryptTokens, FAMILY_KEY_HASH, prepareTables, readBody, ringRequest, prepareCameraStatus, SESSION_AGE, SESSION_COOKIE, tokenDigest
+  API_ORIGIN, database, decryptTokens, encryptTokens, FAMILY_KEY_HASH, prepareTables, ROSE_ACCESS_TAG, ROSE_OPEN_ACCESS, readBody, ringRequest, prepareCameraStatus, SESSION_AGE, SESSION_COOKIE, tokenDigest
 } from '../lib/ring-server.mjs';
 
 async function currentAccessToken(sql, link) {
@@ -61,7 +61,8 @@ export default async function handler(req, res) {
     const [link] = await sql`SELECT l.*, v.expires_at AS viewer_expires_at FROM ring_kitchen_links l
       JOIN ring_kitchen_viewers v ON v.account_id = l.account_id
       WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()
-        AND (v.family_hash IS NULL OR v.family_hash = ${FAMILY_KEY_HASH})`;
+        AND (v.family_hash IS NULL OR v.family_hash = ${FAMILY_KEY_HASH}
+          OR (${ROSE_OPEN_ACCESS} AND v.family_hash = ${ROSE_ACCESS_TAG}))`;
     if (!link) {
       console.info('Ring stream: browser authorization expired or revoked');
       return res.status(401).end();

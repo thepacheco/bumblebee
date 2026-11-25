@@ -75,7 +75,9 @@
   // Move it to <body> so the rose shortcut can show it from anywhere.
   document.body.append(dialog);
 
-  function openKitchen() {
+  let roseJoin = false;
+  function openKitchen(options) {
+    roseJoin = options?.rose === true;
     if (!dialog.open) dialog.showModal();
     connect();
     watchCameraStatus();
@@ -173,6 +175,19 @@
         headers: { 'Content-Type': 'application/sdp' },
         body: peer.localDescription.sdp
       });
+      if (response.status === 401 && roseJoin) {
+        roseJoin = false;
+        stop('Setting up this device…');
+        const joined = await fetch(pairEndpoint, {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rose: true })
+        }).then(r => r.ok, () => false);
+        if (joined && dialog.open) {
+          connect();
+          watchCameraStatus();
+          return;
+        }
+      }
       if (response.status === 401) {
         delete dialog.dataset.authorized;
         stop('');
