@@ -12,6 +12,7 @@
   const historyStatus = document.getElementById('kitchen-history-status');
   const historyList = document.getElementById('kitchen-history-list');
   const endpoint = '/api/ring-stream';
+  const cameraSite = 'https://www.beejan.co';
   let active;
 
   function release(connection) {
@@ -76,6 +77,15 @@
   async function connect() {
     if (active) return;
     start.hidden = true;
+    if (window.location.origin !== cameraSite) {
+      const link = document.createElement('a');
+      link.className = 'camera-control';
+      link.href = cameraSite;
+      link.textContent = 'Open Beejan';
+      status.replaceChildren('Camera access is available on www.beejan.co. ', link);
+      historyToggle.disabled = true;
+      return;
+    }
     if (!window.RTCPeerConnection) {
       status.textContent = 'This browser does not support live view.';
       return;
@@ -122,7 +132,7 @@
       });
       if (!response.ok) {
         throw new Error(response.status === 401 || response.status === 403
-          ? 'This device is not authorized to view Kitchen.'
+          ? 'Authorize this browser through Beejan Kitchen Viewer in the Ring Appstore.'
           : 'Kitchen live view is unavailable.');
       }
       const { answer, session } = await response.json();
