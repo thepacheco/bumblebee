@@ -1,5 +1,5 @@
 import {
-  API_ORIGIN, database, decryptTokens, encryptTokens, readBody, ringRequest, SESSION_COOKIE, tokenDigest
+  API_ORIGIN, database, decryptTokens, encryptTokens, readBody, ringRequest, prepareCameraStatus, SESSION_AGE, SESSION_COOKIE, tokenDigest
 } from '../lib/ring-server.mjs';
 
 async function currentAccessToken(sql, link) {
@@ -54,12 +54,33 @@ export default async function handler(req, res) {
 
   try {
     const sql = database();
-    const [link] = await sql`SELECT l.* FROM ring_kitchen_links l
+    const [link] = await sql`SELECT l.*, v.expires_at AS viewer_expires_at FROM ring_kitchen_links l
       JOIN ring_kitchen_viewers v ON v.account_id = l.account_id
       WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()`;
     if (!link) {
       console.info('Ring stream: browser authorization expired or revoked');
       return res.status(401).end();
+    }
+
+    if (req.method === 'GET' && req.query?.status === '1') {
+      if (new Date(link.viewer_expires_at).getTime() - Date.now() < 7 * 86400000) {
+        const renewed = await sql`UPDATE ring_kitchen_viewers
+          SET expires_at = now() + interval '30 days'
+          WHERE token_hash = ${tokenDigest(cookie)} AND expires_at > now()
+          RETURNING token_hash`;
+        if (renewed.length) res.setHeader('Set-Cookie',
+          `${SESSION_COOKIE}=${cookie}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_AGE}`);
+      }
+      await prepareCameraStatus(sql);
+      const [offline] = await sql`SELECT offline_at FROM ring_kitchen_offline
+        WHERE account_id = ${link.account_id} AND device_id = ${link.device_id}`;
+      const token = await currentAccessToken(sql, link);
+      let online = null;
+      if (token) {
+        const response = await ringRequest(`/v1/devices/${encodeURIComponent(link.device_id)}/status`, token);
+        if (response.ok) online = (await response.json()).data?.attributes?.online ?? null;
+      }
+      return res.status(200).json({ online, lastOffline: offline?.offline_at ?? null });
     }
 
     await sql`CREATE TABLE IF NOT EXISTS ring_kitchen_view_log (
