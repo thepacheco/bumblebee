@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Honey Bee Helper — honey home-remedy site with a hidden two-person check-in, backed by Neon Postgres.",
+  "type": "module",
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4"
   }
