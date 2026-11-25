@@ -6,6 +6,10 @@
   const audio = document.getElementById('kitchen-audio');
   const zoom = document.getElementById('kitchen-zoom');
   const pip = document.getElementById('kitchen-pip');
+  const fullscreen = document.getElementById('kitchen-fullscreen');
+  const history = document.getElementById('kitchen-history');
+  const historyStatus = document.getElementById('kitchen-history-status');
+  const historyList = document.getElementById('kitchen-history-list');
   const endpoint = '/api/ring-stream';
   let active;
 
@@ -31,7 +35,7 @@
     video.style.transform = '';
     audio.textContent = 'Listen';
     zoom.textContent = 'Zoom in';
-    audio.disabled = zoom.disabled = pip.disabled = true;
+    audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
     start.disabled = false;
     status.textContent = message;
   }
@@ -83,6 +87,7 @@
       if (track.kind === 'audio') audio.disabled = false;
       if (track.kind === 'video') {
         zoom.disabled = false;
+        fullscreen.disabled = !(video.requestFullscreen || video.webkitEnterFullscreen);
         pip.disabled = !(document.pictureInPictureEnabled && video.requestPictureInPicture) &&
           !video.webkitSetPresentationMode;
         status.textContent = 'Kitchen live view';
@@ -129,6 +134,35 @@
     video.style.transform = enlarged ? '' : 'scale(1.75)';
     zoom.textContent = enlarged ? 'Zoom in' : 'Reset zoom';
   });
+  fullscreen.addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (video.requestFullscreen) await video.requestFullscreen();
+      else video.webkitEnterFullscreen();
+    } catch {
+      status.textContent = 'Full screen is unavailable in this browser.';
+    }
+  });
+
+  history.addEventListener('toggle', async () => {
+    if (!history.open) return;
+    historyList.replaceChildren();
+    historyStatus.textContent = 'Loading viewing history…';
+    try {
+      const response = await fetch(endpoint, { credentials: 'same-origin' });
+      if (!response.ok) throw new Error('History unavailable');
+      const { views } = await response.json();
+      for (const view of views) {
+        const item = document.createElement('li');
+        item.textContent = new Date(view.started_at).toLocaleString();
+        historyList.append(item);
+      }
+      historyStatus.textContent = views.length ? 'Last 30 days' : 'No live-view sessions recorded.';
+    } catch {
+      historyStatus.textContent = 'Viewing history is unavailable on this device.';
+    }
+  });
+
   pip.addEventListener('click', async () => {
     try {
       if (document.pictureInPictureElement === video) await document.exitPictureInPicture();
