@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { database, prepareTables, readBody } from '../lib/ring-server.mjs';
+import { database, prepareCameraStatus, prepareTables, readBody } from '../lib/ring-server.mjs';
 
 export const config = { api: { bodyParser: false } };
 
@@ -22,7 +22,16 @@ export default async function handler(req, res) {
     const account = event.meta?.account_id;
     const source = event.data?.attributes?.source;
     const sql = database();
-    if (account && event.data?.type === 'app_integration_removed') {
+    const timestamp = event.data?.attributes?.timestamp;
+    if (account && source && event.data?.type === 'device_offline' &&
+        Number.isSafeInteger(timestamp) && timestamp > 0 && timestamp <= Date.now() + 60000) {
+      await prepareCameraStatus(sql);
+      await sql`INSERT INTO ring_kitchen_offline (account_id, device_id, offline_at)
+        SELECT account_id, device_id, ${new Date(timestamp).toISOString()} FROM ring_kitchen_links
+        WHERE account_id = ${account} AND device_id = ${source}
+        ON CONFLICT (account_id, device_id) DO UPDATE
+        SET offline_at = greatest(ring_kitchen_offline.offline_at, EXCLUDED.offline_at)`;
+    } else if (account && event.data?.type === 'app_integration_removed') {
       await prepareTables(sql);
       await sql`DELETE FROM ring_kitchen_links WHERE account_id = ${account}`;
     } else if (account && source && event.data?.type === 'device_removed') {
