@@ -23,8 +23,10 @@ export default async function handler(req, res) {
     return res.status(400).end();
   }
 
+  let step = 'exchange Ring authorization code';
   try {
     const tokens = await exchangeRingAuthorizationCode(body.code);
+    step = 'fetch Ring account profile';
     const profile = await fetch('https://api.amazonvision.com/v1/users/me', {
       headers: { Authorization: `Bearer ${tokens.accessToken}` },
       redirect: 'error',
@@ -41,6 +43,7 @@ export default async function handler(req, res) {
     const ciphertext = Buffer.concat([cipher.update(JSON.stringify(tokens), 'utf8'), cipher.final()]);
     const encrypted = Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString('base64url');
 
+    step = 'store encrypted Ring tokens';
     const sql = neon(DATABASE_URL);
     await sql`CREATE TABLE IF NOT EXISTS ring_pending_links (
       account_id text PRIMARY KEY,
@@ -52,8 +55,10 @@ export default async function handler(req, res) {
       ON CONFLICT (account_id) DO UPDATE
       SET encrypted_tokens = EXCLUDED.encrypted_tokens, received_at = now()`;
 
+    console.info('Ring token exchange: pending authorization saved');
     return res.status(200).end();
   } catch {
+    console.error('Ring token exchange failed:', step);
     return res.status(502).end();
   }
 }
