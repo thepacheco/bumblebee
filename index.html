@@ -254,6 +254,12 @@
         <p id="kitchen-pair-status" role="status" hidden></p>
         <input id="kitchen-pair-link" aria-label="One-time camera pairing link" readonly hidden>
       </div>
+      <form id="kitchen-recovery" class="camera-history" hidden>
+        <label for="kitchen-recovery-key">Owner recovery key</label>
+        <input type="password" id="kitchen-recovery-key" minlength="32" maxlength="128" autocomplete="current-password" required>
+        <button type="submit" class="camera-control">Restore access</button>
+        <p id="kitchen-recovery-status" role="status"></p>
+      </form>
       <section id="kitchen-history" class="camera-history" hidden aria-labelledby="kitchen-history-title">
         <h3 id="kitchen-history-title">Recent live views</h3>
         <p id="kitchen-history-status" role="status"></p>
