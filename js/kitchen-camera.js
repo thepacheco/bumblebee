@@ -240,6 +240,7 @@
     view.y = Math.min(0, Math.max(height - height * view.scale, view.y));
   }
 
+  let onZoomChange = () => {};
   function applyZoom() {
     clampView();
     video.style.transformOrigin = '0 0';
@@ -250,6 +251,7 @@
     zoom.setAttribute('aria-label', zoomed ? 'Reset zoom' : 'Zoom in');
     zoom.title = zoomed ? 'Reset zoom' : 'Zoom in (or pinch, double-tap, scroll)';
     zoom.lastElementChild.textContent = (Math.round(view.scale * 10) / 10) + '×';
+    onZoomChange(zoomed);
   }
 
   function zoomAt(scale, px, py) {
@@ -526,72 +528,116 @@
     return { sx: x0, sy: y0, sw: Math.max(1, x1 - x0), sh: Math.max(1, y1 - y0) };
   }
 
-  async function openMirrorPip() {
+  // Phones and Safari only allow a pop-out to start right inside the tap, so the
+  // zoomed-area video is prepared (and kept playing) whenever the view is zoomed.
+  const canMirror = !('documentPictureInPicture' in window) &&
+    typeof HTMLCanvasElement.prototype.captureStream === 'function' &&
+    ('webkitSetPresentationMode' in HTMLVideoElement.prototype ||
+     (document.pictureInPictureEnabled && 'requestPictureInPicture' in HTMLVideoElement.prototype));
+
+  function mirrorInPip() {
+    return !!mirror && (document.pictureInPictureElement === mirror.out ||
+      mirror.out.webkitPresentationMode === 'picture-in-picture');
+  }
+
+  function startMirror() {
+    if (mirror || !canMirror) return mirror;
     const canvas = document.createElement('canvas');
     canvas.width = 1280; canvas.height = 720;
     const context = canvas.getContext('2d');
     const out = document.createElement('video');
-    out.muted = true; out.playsInline = true;
+    out.muted = true; out.playsInline = true; out.autoplay = true;
+    out.setAttribute('playsinline', ''); out.setAttribute('muted', '');
+    out.setAttribute('aria-hidden', 'true');
+    out.className = 'camera-mirror';
     out.srcObject = canvas.captureStream(30);
-    const state = { canvas, out, running: true };
-    mirror = state;
+    const state = { canvas, out };
     const draw = () => {
-      if (!state.running) return;
       const src = visibleSource();
-      if (src) {
-        context.fillStyle = '#000';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        const fit = Math.min(canvas.width / src.sw, canvas.height / src.sh);
-        const dw = src.sw * fit, dh = src.sh * fit;
-        context.drawImage(video, src.sx, src.sy, src.sw, src.sh,
-          (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
-      }
+      if (!src) return;
+      context.fillStyle = '#000';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      const fit = Math.min(canvas.width / src.sw, canvas.height / src.sh);
+      const dw = src.sw * fit, dh = src.sh * fit;
+      context.drawImage(video, src.sx, src.sy, src.sw, src.sh,
+        (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
     };
     // Timers keep drawing while the page is in the background (rAF would stop).
     state.timer = setInterval(draw, 1000 / 24);
     draw();
-    await out.play();
-    const stopMirror = () => {
-      state.running = false;
-      clearInterval(state.timer);
-      out.srcObject?.getTracks().forEach(track => track.stop());
-      if (mirror === state) mirror = null;
-    };
-    out.addEventListener('leavepictureinpicture', stopMirror, { once: true });
+    const ended = () => { if (view.scale <= 1.01 || !live()) stopMirror(); };
+    out.addEventListener('leavepictureinpicture', ended);
     out.addEventListener('webkitpresentationmodechanged', () => {
-      if (out.webkitPresentationMode !== 'picture-in-picture') stopMirror();
+      if (out.webkitPresentationMode !== 'picture-in-picture') ended();
     });
-    try {
-      if (out.requestPictureInPicture) await out.requestPictureInPicture();
-      else out.webkitSetPresentationMode('picture-in-picture');
-    } catch (error) {
-      stopMirror();
-      throw error;
-    }
+    stageHome.parent.append(out);
+    out.play().catch(() => {});
+    mirror = state;
+    return state;
   }
 
-  async function closePip() {
+  function stopMirror() {
+    const state = mirror;
+    if (!state) return;
+    mirror = null;
+    clearInterval(state.timer);
+    if (document.pictureInPictureElement === state.out) document.exitPictureInPicture().catch(() => {});
+    state.out.srcObject?.getTracks().forEach(track => track.stop());
+    state.out.remove();
+  }
+
+  onZoomChange = zoomed => {
+    if (zoomed && live()) startMirror();
+    else if (!zoomed && mirror && !mirrorInPip()) stopMirror();
+  };
+
+  // Starts picture-in-picture for one video without waiting on anything first.
+  function popOut(el) {
+    if (el.webkitSupportsPresentationMode?.('picture-in-picture') && el.webkitSetPresentationMode) {
+      el.webkitSetPresentationMode('picture-in-picture');
+      return Promise.resolve();
+    }
+    if (document.pictureInPictureEnabled && el.requestPictureInPicture) return el.requestPictureInPicture();
+    return Promise.reject(new Error('unsupported'));
+  }
+
+  function closePip() {
     if (pipWindow) { pipWindow.close(); return true; }
-    if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return true; }
-    if (mirror?.out.webkitPresentationMode === 'picture-in-picture') { mirror.out.webkitSetPresentationMode('inline'); return true; }
-    if (video.webkitPresentationMode === 'picture-in-picture') { video.webkitSetPresentationMode('inline'); return true; }
+    if (document.pictureInPictureElement) { document.exitPictureInPicture().catch(() => {}); return true; }
+    for (const el of [mirror?.out, video]) {
+      if (el?.webkitPresentationMode === 'picture-in-picture') { el.webkitSetPresentationMode('inline'); return true; }
+    }
     return false;
   }
 
-  pip.addEventListener('click', async () => {
-    try {
-      if (await closePip()) return;
-      const zoomed = view.scale > 1.01;
-      const canMirror = typeof HTMLCanvasElement.prototype.captureStream === 'function' &&
-        ((document.pictureInPictureEnabled && HTMLVideoElement.prototype.requestPictureInPicture) ||
-         'webkitSetPresentationMode' in HTMLVideoElement.prototype);
-      if ('documentPictureInPicture' in window) await openWindowPip();
-      else if (zoomed && canMirror) await openMirrorPip();
-      else if (document.pictureInPictureEnabled && video.requestPictureInPicture) await video.requestPictureInPicture();
-      else if (video.webkitSetPresentationMode) video.webkitSetPresentationMode('picture-in-picture');
-    } catch {
-      status.textContent = 'Pop out is unavailable in this browser.';
+  let mirrorRefused = false;
+  function popOutFailed() {
+    status.textContent = 'Pop out is unavailable in this browser.';
+  }
+
+  pip.addEventListener('click', () => {
+    if (closePip()) return;
+    if ('documentPictureInPicture' in window) {
+      openWindowPip().catch(popOutFailed);
+      return;
+    }
+    const zoomed = view.scale > 1.01;
+    const source = zoomed && !mirrorRefused ? startMirror() : null;
+    if (source && source.out.readyState >= 2) {
+      popOut(source.out).catch(() => {
+        mirrorRefused = true;
+        popOut(video).catch(() => { status.textContent = 'Tap Pop out again to pop out the full view.'; });
+      });
+      // Some phones ignore the request without an error; remember that and use the full view next time.
+      setTimeout(() => {
+        if (!mirrorInPip() && video.webkitPresentationMode !== 'picture-in-picture' && !document.pictureInPictureElement) {
+          mirrorRefused = true;
+          status.textContent = 'This phone can only pop out the full view. Tap Pop out again.';
+        }
+      }, 1500);
+    } else {
+      popOut(video).catch(popOutFailed);
     }
   });
-  dialog.addEventListener('close', () => { closePip().catch(() => {}); });
+  dialog.addEventListener('close', () => { closePip(); stopMirror(); });
 })();
