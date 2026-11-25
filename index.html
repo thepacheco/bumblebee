@@ -141,7 +141,7 @@
         <p>Just the two of us.</p>
         <div class="who-row" id="who-row">
           <button class="who-btn" data-who="tifajan" aria-label="Elephant">
-            <img src="assets/elephant.svg" alt="Flower" />
+            <img src="assets/elephant.svg" alt="Rose" />
           </button>
           <button class="who-btn" data-who="you" aria-label="Bee">
             <img src="assets/bee.svg" alt="Bee" />
@@ -160,12 +160,13 @@
     <div class="ci-toolbar" id="ci-toolbar" hidden>
       <button class="ci-tool" id="story-btn"><span class="ci-ico">📖</span> Storybook</button>
       <button class="ci-tool" id="hist-btn"><span class="ci-ico">🕘</span> Check-in History</button>
+      <button type="button" class="ci-tool" id="kitchen-btn">Kitchen camera</button>
       <button class="ci-tool" id="msg-btn"><span class="ci-ico">💬</span> Messages</button>
     </div>
 
     <main class="split" id="board" hidden>
       <section class="pane pane-tifajan" data-side="tifajan">
-        <img class="avatar" src="assets/elephant.svg" alt="Flower" />
+        <img class="avatar" src="assets/elephant.svg" alt="Rose" />
         <div class="name"><span class="dot" data-dot="tifajan"></span></div>
         <div class="status-bubble" data-status="tifajan">—</div>
         <div class="status-meta" data-meta="tifajan">No check-in yet</div>
@@ -229,6 +230,23 @@
       <div class="story-body"><ul class="hist-list" id="hist-list"></ul></div>
     </div>
 
+    <dialog id="kitchen-camera" aria-labelledby="kitchen-title" style="width:min(90vw, 46rem)">
+      <header class="story-head">
+        <button type="button" class="composer-close" id="kitchen-close" aria-label="Close camera">✕</button>
+        <h2 id="kitchen-title">Kitchen camera</h2>
+      </header>
+      <div style="overflow:hidden;background:#231a18">
+        <video id="kitchen-video" playsinline muted style="display:block;width:100%;aspect-ratio:16/9"></video>
+      </div>
+      <p id="kitchen-status" role="status">Select Start live view to connect.</p>
+      <div>
+        <button type="button" class="ci-tool" id="kitchen-start">Start live view</button>
+        <button type="button" class="ci-tool" id="kitchen-audio" disabled>Listen</button>
+        <button type="button" class="ci-tool" id="kitchen-zoom" disabled>Zoom in</button>
+        <button type="button" class="ci-tool" id="kitchen-pip" disabled>Picture-in-Picture</button>
+      </div>
+    </dialog>
+
     <!-- messages (WhatsApp-style chat between the two of you) -->
     <div class="msgs" id="messages" hidden role="dialog" aria-modal="true" aria-label="Messages">
       <header class="story-head">
@@ -246,6 +264,7 @@
 
   <script src="js/store-vercel.js"></script>
   <script src="js/checkin.js"></script>
+  <script src="js/kitchen-camera.js"></script>
   <script src="js/main.js"></script>
   <script src="js/recipes.js"></script>
 
