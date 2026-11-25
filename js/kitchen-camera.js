@@ -89,6 +89,7 @@
   document.getElementById('kitchen-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => {
     clearInterval(statusInterval);
+    delete dialog.dataset.authorized;
     health.hidden = true;
     stop();
   });
@@ -105,6 +106,7 @@
         if (!response.ok || !dialog.open) return;
         const { online, lastOffline: offlineAt } = await response.json();
         if (!dialog.open) return;
+        dialog.dataset.authorized = 'true';
         health.hidden = false;
         health.dataset.state = online === true ? 'online' : online === false ? 'offline' : 'unknown';
         healthState.textContent = online === true ? 'Online' : online === false ? 'Offline' : 'Status unavailable';
@@ -177,12 +179,14 @@
         body: peer.localDescription.sdp
       });
       if (response.status === 401) {
+        delete dialog.dataset.authorized;
         stop('This browser needs one-time access to Kitchen.');
         recoveryForm.hidden = false;
         return;
       }
       if (!response.ok) throw new Error('Kitchen live view is unavailable.');
       const { answer, session } = await response.json();
+      if (dialog.open) dialog.dataset.authorized = 'true';
       connection.session = session;
       if (active !== connection) {
         release(connection);
@@ -290,9 +294,15 @@
       });
       if (response.status === 409) throw new Error('Kitchen needs to be connected in the Ring Appstore first.');
       if (response.status === 403) throw new Error('That recovery key did not match.');
-      if (!response.ok) throw new Error('Browser recovery is unavailable. Check that the recovery key is set in Vercel.');
+      if (!response.ok) {
+        const { error } = await response.json().catch(() => ({}));
+        if (error === 'recovery_configuration') throw new Error('This deployment could not read the owner passphrase.');
+        if (error === 'recovery_storage') throw new Error('Beejan could not save this browser’s access. Try again.');
+        throw new Error('Could not unlock the camera. Try again.');
+      }
       if (!dialog.open) return;
       recoveryForm.hidden = true;
+      dialog.dataset.authorized = 'true';
       recoveryStatus.textContent = '';
       connect();
       watchCameraStatus();
