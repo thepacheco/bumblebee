@@ -41,8 +41,8 @@ async function currentAccessToken(sql, link) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Permissions-Policy', 'microphone=(), camera=()');
-  if (!['POST', 'DELETE'].includes(req.method)) return res.status(405).end();
-  if (!['https://www.beejan.co', 'https://beejan.co'].includes(req.headers.origin)) return res.status(403).end();
+  if (!['GET', 'POST', 'DELETE'].includes(req.method)) return res.status(405).end();
+  if (req.method !== 'GET' && !['https://www.beejan.co', 'https://beejan.co'].includes(req.headers.origin)) return res.status(403).end();
 
   const cookie = req.cookies?.[SESSION_COOKIE];
   if (typeof cookie !== 'string' || !/^[\w-]{43}$/.test(cookie)) return res.status(401).end();
@@ -53,6 +53,17 @@ export default async function handler(req, res) {
       JOIN ring_kitchen_viewers v ON v.account_id = l.account_id
       WHERE v.token_hash = ${tokenDigest(cookie)} AND v.expires_at > now()`;
     if (!link) return res.status(401).end();
+
+    await sql`CREATE TABLE IF NOT EXISTS ring_kitchen_view_log (
+      account_id text NOT NULL REFERENCES ring_kitchen_links(account_id) ON DELETE CASCADE,
+      started_at timestamptz NOT NULL DEFAULT now()
+    )`;
+    if (req.method === 'GET') {
+      const views = await sql`SELECT started_at FROM ring_kitchen_view_log
+        WHERE account_id = ${link.account_id} AND started_at >= now() - interval '30 days'
+        ORDER BY started_at DESC LIMIT 100`;
+      return res.status(200).json({ views });
+    }
 
     const token = await currentAccessToken(sql, link);
     if (!token) return res.status(503).end();
@@ -86,6 +97,12 @@ export default async function handler(req, res) {
     const session = sessionUrl.pathname.slice(endpoint.length + 1);
     if (sessionUrl.origin !== API_ORIGIN || !sessionUrl.pathname.startsWith(endpoint + '/') ||
         !/^[\w.-]{1,200}$/.test(session)) return res.status(502).end();
+    try {
+      await sql`INSERT INTO ring_kitchen_view_log (account_id) VALUES (${link.account_id})`;
+    } catch (error) {
+      await ringRequest(`${endpoint}/${session}`, token, { method: 'DELETE' }).catch(() => {});
+      throw error;
+    }
     return res.status(200).json({ answer: await result.text(), session });
   } catch (error) {
     return res.status(error instanceof RangeError ? 413 : 502).end();
