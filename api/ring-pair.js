@@ -1,5 +1,5 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { database, SESSION_COOKIE, SESSION_AGE, tokenDigest } from '../lib/ring-server.mjs';
+import { database, prepareTables, SESSION_COOKIE, SESSION_AGE, tokenDigest } from '../lib/ring-server.mjs';
 
 const SITE = 'https://www.beejan.co';
 const TOKEN = /^[\w-]{43}$/;
@@ -13,9 +13,10 @@ export default async function handler(req, res) {
   const recovery = req.body?.recovery;
   if (recovery !== undefined) {
     const expected = process.env.RING_BROWSER_RECOVERY_KEY;
-    const configured = typeof expected === 'string' && expected.length <= 128 &&
-      (expected.length >= 32 || expected.trim().split(/\s+/).length >= 6);
-    if (!configured) return res.status(503).end();
+    if (typeof expected !== 'string' || !expected || expected.length > 128) {
+      console.warn('Ring recovery: production secret missing or exceeds maximum length');
+      return res.status(503).json({ error: 'recovery_configuration' });
+    }
     if (typeof recovery !== 'string' || recovery.length > 128 ||
         !timingSafeEqual(Buffer.from(tokenDigest(recovery), 'hex'), Buffer.from(tokenDigest(expected), 'hex'))) {
       return res.status(403).end();
@@ -24,6 +25,7 @@ export default async function handler(req, res) {
 
   try {
     const sql = database();
+    await prepareTables(sql);
     await sql`CREATE TABLE IF NOT EXISTS ring_kitchen_pairing (
       token_hash text PRIMARY KEY,
       account_id text NOT NULL REFERENCES ring_kitchen_links(account_id) ON DELETE CASCADE,
@@ -66,8 +68,8 @@ export default async function handler(req, res) {
       RETURNING token_hash`;
     if (!rows.length) return res.status(401).end();
     return res.status(200).json({ url: `${SITE}/#camera-pair=${viewer}` });
-  } catch {
-    console.error('Ring pairing: could not process browser authorization');
-    return res.status(503).end();
+  } catch (error) {
+    console.error('Ring pairing: storage operation failed', error?.code ?? 'unknown');
+    return res.status(503).json({ error: 'recovery_storage' });
   }
 }
