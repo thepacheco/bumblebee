@@ -345,9 +345,6 @@ body.checkin-open { overflow: hidden; }
 .camera-panel:has(.camera-recovery:not([hidden])) .camera-stage { display: none; }
 .camera-recovery { padding: 1rem; border-top: 1px solid #e6d7c7; }
 .camera-recovery h3 { margin: 0 0 .35rem; }
-.camera-recovery label { color: #644b3c; font-size: .9rem; }
-.camera-recovery-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .65rem; }
-.camera-recovery-row input { flex: 1 1 13rem; min-width: 0; min-height: 2.65rem; padding: .35rem .55rem; border: 1px solid #cdbba9; border-radius: .55rem; font: inherit; }
+.camera-recovery p { margin: 0; color: #644b3c; font-size: .9rem; }
 .camera-primary { color: #fff; background: #236239; border-color: #236239; }
 .camera-primary:not(:disabled):hover { background: #194b2c; }
-.camera-recovery p:empty { display: none; }

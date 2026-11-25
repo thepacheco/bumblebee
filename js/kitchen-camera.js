@@ -14,9 +14,7 @@
   const pairButton = document.getElementById('kitchen-pair');
   const pairStatus = document.getElementById('kitchen-pair-status');
   const pairLink = document.getElementById('kitchen-pair-link');
-  const recoveryForm = document.getElementById('kitchen-recovery');
-  const recoveryInput = document.getElementById('kitchen-recovery-key');
-  const recoveryStatus = document.getElementById('kitchen-recovery-status');
+  const unpaired = document.getElementById('kitchen-unpaired');
   const pairEndpoint = '/api/ring-pair';
   const endpoint = '/api/ring-stream';
   const cameraSite = 'https://www.beejan.co';
@@ -52,9 +50,7 @@
     pairLink.hidden = true;
     pairLink.value = '';
     pairStatus.hidden = true;
-    recoveryForm.hidden = true;
-    recoveryForm.reset();
-    recoveryStatus.textContent = '';
+    unpaired.hidden = true;
     audio.disabled = zoom.disabled = pip.disabled = fullscreen.disabled = true;
     start.hidden = !retry;
     start.disabled = false;
@@ -180,8 +176,8 @@
       });
       if (response.status === 401) {
         delete dialog.dataset.authorized;
-        stop('This browser needs one-time access to Kitchen.');
-        recoveryForm.hidden = false;
+        stop('');
+        unpaired.hidden = false;
         return;
       }
       if (!response.ok) throw new Error('Kitchen live view is unavailable.');
@@ -263,8 +259,7 @@
     try {
       const response = await fetch(pairEndpoint, { method: 'POST', credentials: 'same-origin' });
       if (response.status === 401) {
-        pairStatus.textContent = 'Restore access on this browser before pairing another device.';
-        recoveryForm.hidden = false;
+        pairStatus.textContent = 'This browser isn’t paired, so it can’t add other devices.';
         return;
       }
       if (!response.ok) throw new Error('Pairing unavailable');
@@ -277,51 +272,6 @@
       pairStatus.textContent = 'Could not create a pairing link. Try again.';
     } finally {
       pairButton.disabled = false;
-    }
-  });
-
-  recoveryForm.addEventListener('submit', async event => {
-    event.preventDefault();
-    const submit = recoveryForm.querySelector('button');
-    const recovery = recoveryInput.value;
-    recoveryInput.value = '';
-    submit.disabled = true;
-    recoveryStatus.textContent = 'Checking access…';
-    try {
-      const response = await fetch(pairEndpoint, {
-        method: 'POST', credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recovery })
-      });
-      if (response.status === 409) {
-        const { error } = await response.json();
-        const messages = {
-          no_ring_grant: 'Passphrase accepted. Beejan has no saved Ring grant for this camera.',
-          ring_grant_unavailable: 'Passphrase accepted. Ring rejected the saved authorization.',
-          ring_owner_mismatch: 'The Ring account email differs from the owner email configured for Beejan.',
-          ring_device_permission: 'Ring did not grant access to the camera list.',
-          ring_kitchen_missing: 'Ring did not return exactly one shared camera named Kitchen.',
-          ring_link_pending: 'Ring has not confirmed the Kitchen integration.',
-          multiple_links: 'Beejan found multiple linked accounts and could not select Kitchen safely.'
-        };
-        throw new Error(messages[error] || 'Beejan could not identify your Kitchen camera.');
-      }
-      if (response.status === 403) throw new Error('That recovery key did not match.');
-      if (!response.ok) {
-        const { error } = await response.json().catch(() => ({}));
-        if (error === 'recovery_configuration') throw new Error('This deployment could not read the owner passphrase.');
-        if (error === 'recovery_storage') throw new Error('Beejan could not save this browser’s access. Try again.');
-        throw new Error('Could not unlock the camera. Try again.');
-      }
-      if (!dialog.open) return;
-      recoveryForm.hidden = true;
-      dialog.dataset.authorized = 'true';
-      recoveryStatus.textContent = '';
-      connect();
-      watchCameraStatus();
-    } catch (error) {
-      recoveryStatus.textContent = error.message;
-    } finally {
-      submit.disabled = false;
     }
   });
 

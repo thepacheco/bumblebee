@@ -256,15 +256,10 @@
         <p id="kitchen-pair-status" role="status" hidden></p>
         <input id="kitchen-pair-link" aria-label="One-time camera pairing link" readonly hidden>
       </div>
-      <form id="kitchen-recovery" class="camera-recovery" hidden>
-        <h3>Set up camera access</h3>
-        <label for="kitchen-recovery-key">Enter the passphrase saved for this camera.</label>
-        <div class="camera-recovery-row">
-          <input type="text" id="kitchen-recovery-key" maxlength="128" autocomplete="off" autocapitalize="none" spellcheck="false" required>
-          <button type="submit" class="camera-control camera-primary">Unlock camera →</button>
-        </div>
-        <p id="kitchen-recovery-status" role="status"></p>
-      </form>
+      <div id="kitchen-unpaired" class="camera-recovery" hidden>
+        <h3>This device isn’t paired yet</h3>
+        <p>On a phone or browser that already shows Kitchen, open the camera and tap <strong>Add a device</strong>, then open that link here.</p>
+      </div>
       <section id="kitchen-history" class="camera-history" hidden aria-labelledby="kitchen-history-title">
         <h3 id="kitchen-history-title">Recent live views</h3>
         <p id="kitchen-history-status" role="status"></p>
