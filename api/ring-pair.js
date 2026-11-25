@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { database, SESSION_COOKIE, SESSION_AGE, tokenDigest } from '../lib/ring-server.mjs';
 
 const SITE = 'https://www.beejan.co';
@@ -10,6 +10,16 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   if (req.headers.origin !== SITE) return res.status(403).end();
 
+  const recovery = req.body?.recovery;
+  if (recovery !== undefined) {
+    const expected = process.env.RING_BROWSER_RECOVERY_KEY;
+    if (typeof expected !== 'string' || expected.length < 32) return res.status(503).end();
+    if (typeof recovery !== 'string' || recovery.length > 128 ||
+        !timingSafeEqual(Buffer.from(tokenDigest(recovery), 'hex'), Buffer.from(tokenDigest(expected), 'hex'))) {
+      return res.status(403).end();
+    }
+  }
+
   try {
     const sql = database();
     await sql`CREATE TABLE IF NOT EXISTS ring_kitchen_pairing (
@@ -18,6 +28,17 @@ export default async function handler(req, res) {
       expires_at timestamptz NOT NULL
     )`;
     const viewer = randomBytes(32).toString('base64url');
+    if (recovery !== undefined) {
+      const rows = await sql`WITH sole_link AS (
+        SELECT min(account_id) AS account_id FROM ring_kitchen_links HAVING count(*) = 1
+      )
+      INSERT INTO ring_kitchen_viewers (token_hash, account_id, expires_at)
+        SELECT ${tokenDigest(viewer)}, account_id, now() + interval '30 days' FROM sole_link
+        RETURNING account_id`;
+      if (!rows.length) return res.status(409).end();
+      res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${viewer}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_AGE}`);
+      return res.status(204).end();
+    }
     if (req.body?.code !== undefined) {
       const { code } = req.body;
       if (typeof code !== 'string' || !TOKEN.test(code)) return res.status(400).end();
