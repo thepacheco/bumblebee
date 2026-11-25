@@ -17,6 +17,10 @@
   const pairEndpoint = '/api/ring-pair';
   const endpoint = '/api/ring-stream';
   const cameraSite = 'https://www.beejan.co';
+  const health = document.getElementById('kitchen-health');
+  const healthState = document.getElementById('kitchen-health-state');
+  const lastOffline = document.getElementById('kitchen-last-offline');
+  let statusInterval;
   let active;
 
   function release(connection) {
@@ -74,12 +78,40 @@
   document.getElementById('kitchen-btn').addEventListener('click', () => {
     dialog.showModal();
     connect();
+    watchCameraStatus();
   });
   document.getElementById('kitchen-close').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => stop());
+  dialog.addEventListener('close', () => {
+    clearInterval(statusInterval);
+    health.hidden = true;
+    stop();
+  });
   window.addEventListener('pagehide', () => stop());
 
   start.addEventListener('click', connect);
+
+  function watchCameraStatus() {
+    if (window.location.origin !== cameraSite) return;
+    clearInterval(statusInterval);
+    async function update() {
+      try {
+        const response = await fetch(endpoint + '?status=1', { credentials: 'same-origin' });
+        if (!response.ok || !dialog.open) return;
+        const { online, lastOffline: offlineAt } = await response.json();
+        if (!dialog.open) return;
+        health.hidden = false;
+        health.dataset.state = online === true ? 'online' : online === false ? 'offline' : 'unknown';
+        healthState.textContent = online === true ? 'Online' : online === false ? 'Offline' : 'Status unavailable';
+        lastOffline.textContent = offlineAt
+          ? 'Last offline ' + new Date(offlineAt).toLocaleString()
+          : online === false ? 'Offline time unavailable' : '';
+      } catch {
+        if (dialog.open && !health.hidden) healthState.textContent = 'Status unavailable';
+      }
+    }
+    update();
+    statusInterval = setInterval(update, 20000);
+  }
 
   async function connect() {
     if (active) return;
@@ -246,7 +278,10 @@
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
     }).then(response => {
       if (!response.ok) throw new Error('This pairing link expired or was already used.');
-      if (dialog.open) connect();
+      if (dialog.open) {
+        connect();
+        watchCameraStatus();
+      }
     }).catch(error => {
       status.textContent = error.message;
     });
